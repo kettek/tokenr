@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script type='text/javascript' src='tokenr.js'></script>
+  <script type='text/javascript'>
+  window.addEventListener('load', function() {
+    ktk.Tokenr.init(document.getElementById('tokenr-editor'))
+  })
+  </script>
+  <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet"> 
+  <style type='text/css'>
+    body { margin: 0;}
+    html {
+      min-height: 100%;
+    }
+    #tokenr-container {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .flex-item {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    #tokenr-editor {
+      min-width: 512px;
+      min-height: 512px;
+      background-color: #606060;
+      background-image: linear-gradient(45deg, #a0a0a0 25%, transparent 25%), linear-gradient(-45deg, #a0a0a0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #a0a0a0 75%), linear-gradient(-45deg, transparent 75%, #a0a0a0 75%);
+      background-size: 60px 60px;
+      background-position: 0 0, 0 30px, 30px -30px, -30px 0px;
+      -moz-box-shadow:    inset 0 0 4px #000000;
+      -webkit-box-shadow: inset 0 0 4px #000000;
+      box-shadow:         inset 0 0 4px #000000;
+    }
+    #tokenr-editor-container {
+      position: relative;
+      background-color: #111;
+    }
+    #tokenr-editor-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50%;
+    }
+    #tokenr-scale-field {
+      width: 3em;
+    }
+    #tokenr-scale-range {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+<div id='tokenr-container'>
+  <div class='flex-item' id='tokenr-editor-container'>
+    <div id='tokenr-editor-controls'><input type='number' id='tokenr-scale-field' /><input type='range' id='tokenr-scale-range' min='1' value='100' max='500' step='1' /><button id='tokenr-editor-save'>Save</button></div>
+    <canvas id='tokenr-editor'></canvas>
+  </div>
+</div>
+</body>
+</html>
