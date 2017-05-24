@@ -41,6 +41,7 @@ editor.borderImageTop   = 0
 editor.backBuffer   = document.createElement('canvas')
 editor.overlay      = document.createElement('canvas')
 editor.transparentColor = [255, 0, 255]
+editor.effects    = []
 /* ======== Methods ======== */
 editor.on('init', function(dom) {
   editor.dom = dom
@@ -223,11 +224,27 @@ editor.on('render', function() {
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, editor.dom.width, editor.dom.height)
   if (editor.tokenImage.width > 0) {
+    // alpha mask
     if (editor.borderImage.width > 0) {
       ctx.drawImage(editor.borderImage, editor.borderImage.width/2, 0, editor.borderImage.width/2, editor.borderImage.height, 0, 0, editor.borderImage.width/2, editor.borderImage.height)
     }
-    ctx.globalCompositeOperation = 'source-in'
+    ctx.globalCompositeOperation = 'source-atop'
+    var background = false
+    for (var i = 0; i < editor.effects.length; i++) {
+      if (editor.effects[i].type !== 0) continue
+      if (editor.effects[i].name == 'background-color') background = true
+      editor.effects[i].run(ctx)
+    }
+    if (background) {
+      ctx.globalCompositeOperation = 'source-atop'
+    } else {
+      ctx.globalCompositeOperation = 'source-in'
+    }
     ctx.drawImage(editor.tokenImage, editor.tokenImageLeft, editor.tokenImageTop, editor.tokenImage.width * editor.tokenImageZoom, editor.tokenImage.height * editor.tokenImageZoom)
+    for (var i = 0; i < editor.effects.length; i++) {
+      if (editor.effects[i].type !== 1) continue
+      editor.effects[i].run(ctx)
+    }
   }
   if (editor.borderImage.width > 0) {
     ctx.globalCompositeOperation = 'source-over'
@@ -255,24 +272,19 @@ editor.on('update', function() {
   editor.emit('render')
   return this
 })
-editor.onDrop = function(e) {
-  e.preventDefault()
-  if (inCenter) {
-    editor.tokenImage = e.image
-  } else {
-    editor.borderImage = e.image
-  }
-}
-editor.onPress = function(e) {
-}
-editor.onDrag = function(e) {
-}
-editor.onZoom = function(e) {
-}
+// effects - background, colorize, inner-shadow, outer-shadow
 /* ================================ PUBLIC ================================ */
 return {
   init: function(editorDom) {
     editor.emit('init', editorDom).emit('update')
+    /*editor.effects.push({
+      type: 0,
+      name: 'background-color',
+      run: function(ctx) {
+        ctx.fillStyle = '#FF0000'
+        ctx.fillRect(0, 0, editor.dom.width, editor.dom.height)
+      }
+    })*/
   }
 }
 })()
