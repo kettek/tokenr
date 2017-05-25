@@ -49,6 +49,7 @@ var names = [
   'monk',
   'skeleton'
 ]
+var name = names[rand(0, names.length)]
 /* ======================== Editor ======================== */
 var editor = new ktk.Emitter()
 /* ======== Properties ======== */
@@ -284,7 +285,6 @@ editor.on('render', function() {
     ctx.textAlign = 'center'
     ctx.fillStyle = '#000'
     ctx.strokeStyle = '#fff'
-    var name = names[rand(0, names.length)]
     ctx.fillText('Drop '+name+' here', editor.dom.width/2, editor.dom.height/2+16)
     ctx.strokeText('Drop '+name+' here', editor.dom.width/2, editor.dom.height/2+16)
   } else {
@@ -328,24 +328,26 @@ effects.on('add', function(index) {
   if (index < 0 || index >= effects.available.length) return
   var effect = Object.assign({}, effects.available[index])
   var effect_view = effect.view(editor);
-  var el = effects.fab('div', {className: 'tokenr-effects-item'})
+  var itemContainer = effects.fab('div', {className: 'tokenr-editor-effects-item'})
+  var itemContent = effects.fab('div', {className: 'tokenr-editor-effects-item-content'})
   var elBackground = effects.fab('input', {type: 'checkbox', checked: effect.isBackground})
   elBackground.addEventListener('change', function(e) {
     effect.isBackground = e.target.checked
     editor.emit('render')
   })
-  el.appendChild(elBackground)
+  itemContent.appendChild(elBackground)
   for (var i = 0; i < effect_view.length; i++) {
-    el.appendChild(effect_view[i])
+    itemContent.appendChild(effect_view[i])
   }
+  itemContainer.appendChild(itemContent)
   var _index = effects.list.length
-  el.appendChild(effects.fab('input', {
+  itemContainer.appendChild(effects.fab('input', {
     type: 'button', value: 'remove', onclick: function(e) {
-      effects.emit('rem', el)
+      effects.emit('rem', itemContainer)
     }
   }))
-  effects.domList.appendChild(el)
-  effects.listDoms.push(el)
+  effects.domList.appendChild(itemContainer)
+  effects.listDoms.push(itemContainer)
   effects.list.push(effect)
   editor.emit('render')
 })

@@ -16,6 +16,7 @@
     }
     #tokenr-container {
       height: 100%;
+      width: 100%;
       display: flex;
       align-items: flex-start;
       align-content: flex-start; 
@@ -35,6 +36,7 @@
     #tokenr-editor-container {
       position: relative;
       background-color: #111;
+      width: 100%;
     }
     #tokenr-editor-controls {
       display: flex;
@@ -50,14 +52,30 @@
     .rows {
       display: flex;
       flex-direction: row;
-      flex: 1;
     }
     .cols {
       display: flex;
       flex-direction: column;
-      flex: 1;
     }
     #tokenr-editor-effects {
+      flex: 1;
+    }
+    #tokenr-editor-effects-select {
+    }
+    #tokenr-editor-effects-list {
+      flex: 1;
+    }
+    .tokenr-editor-effects-item {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      border: 1px solid red;
+      align-items: center;
+    }
+    .tokenr-editor-effects-item-content {
+      flex: 1;
+    }
+    .tokenr-editor-effects-item-add {
       flex: 1;
     }
     #tokenr-editor-view {
@@ -69,7 +87,7 @@
 <div id='tokenr-container' class='rows'>
   <div id='tokenr-editor-container' class='rows'>
     <div id='tokenr-editor-effects' class='cols'>
-      <div class='rows'><select id='tokenr-editor-effects-select' style="flex: 1"></select><input id='tokenr-editor-effects-add' type='submit' value='Add' /></div>
+      <div class='rows'><select id='tokenr-editor-effects-select' style='flex:1'></select><input id='tokenr-editor-effects-add' type='submit' value='Add' /></div>
       <div id='tokenr-editor-effects-list' class='cols'></div>
     </div>
     <div id='tokenr-editor-view' class='cols'>
