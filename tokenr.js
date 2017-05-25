@@ -23,6 +23,32 @@ ktk.Emitter = ktk.Emitter || function() {
 */
 ktk.Tokenr = (function() {
 /* ================================ PRIVATE ================================ */
+var rand = function(mi, ma) {
+  var min = Math.ceil(mi);
+  var max = Math.floor(ma+1);
+  var r = Math.floor(Math.random() * (max - min)) + min;
+  return r
+}
+var names = [
+  'orc',
+  'half-orc',
+  'tengu',
+  'goblin',
+  'dryad',
+  'elf',
+  'halfling',
+  'kobold',
+  'dragon',
+  'barbarian',
+  'wizard',
+  'fighter',
+  'ranger',
+  'druid',
+  'bard',
+  'rogue',
+  'monk',
+  'skeleton'
+]
 /* ======================== Editor ======================== */
 var editor = new ktk.Emitter()
 /* ======== Properties ======== */
@@ -41,7 +67,6 @@ editor.borderImageTop   = 0
 editor.backBuffer   = document.createElement('canvas')
 editor.overlay      = document.createElement('canvas')
 editor.transparentColor = [255, 0, 255]
-editor.effects    = []
 /* ======== Methods ======== */
 editor.on('init', function(dom) {
   editor.dom = dom
@@ -55,7 +80,8 @@ editor.on('init', function(dom) {
 
     ctx = editor.overlay.getContext('2d')
     ctx.clearRect(0, 0, editor.dom.width, editor.dom.height)
-    ctx.font = '20pt Oswald'
+    ctx.font = '32pt Bowlby One SC'
+    ctx.lineWidth = 2;
     ctx.textAlign = 'center'
 
     ctx.globalAlpha = 0.25
@@ -65,16 +91,20 @@ editor.on('init', function(dom) {
         && y >= h && y <= editor.dom.height-h) {
       ctx.fillRect(w, h, editor.dom.width-w*2, editor.dom.height-h*2)
       ctx.globalAlpha = 1.0
-      ctx.fillText('Use Image as Token', editor.dom.width/2, editor.dom.height/2)
-      ctx.strokeText('Use Image as Token', editor.dom.width/2, editor.dom.height/2)
+      ctx.fillText('Use Image', editor.dom.width/2, editor.dom.height/2-24+16)
+      ctx.strokeText('Use Image', editor.dom.width/2, editor.dom.height/2-24+16)
+      ctx.fillText('as Token', editor.dom.width/2, editor.dom.height/2+24+16)
+      ctx.strokeText('as Token', editor.dom.width/2, editor.dom.height/2+24+16)
     } else {
       ctx.fillRect(0, h, w, editor.dom.height-h*2)
       ctx.fillRect(0, 0, editor.dom.width, h)
       ctx.fillRect(editor.dom.width-w, h, w, editor.dom.height-h*2)
       ctx.fillRect(0, editor.dom.height-h, editor.dom.width, h)
       ctx.globalAlpha = 1.0
-      ctx.fillText('Use Image as Border', editor.dom.width/2, editor.dom.height/2)
-      ctx.strokeText('Use Image as Border', editor.dom.width/2, editor.dom.height/2)
+      ctx.fillText('Use Image', editor.dom.width/2, editor.dom.height/2-24+16)
+      ctx.strokeText('Use Image', editor.dom.width/2, editor.dom.height/2-24+16)
+      ctx.fillText('as Border', editor.dom.width/2, editor.dom.height/2+24+16)
+      ctx.strokeText('as Border', editor.dom.width/2, editor.dom.height/2+24+16)
     }
     editor.isDragging = true
     editor.emit('render')
@@ -223,41 +253,40 @@ editor.on('render', function() {
   ctx = editor.dom.getContext('2d')
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, editor.dom.width, editor.dom.height)
-  if (editor.tokenImage.width > 0) {
-    // alpha mask
-    if (editor.borderImage.width > 0) {
-      ctx.drawImage(editor.borderImage, editor.borderImage.width/2, 0, editor.borderImage.width/2, editor.borderImage.height, 0, 0, editor.borderImage.width/2, editor.borderImage.height)
+  // render background effects
+  ctx.globalCompositeOperation = 'source-over'
+  for (var i = 0; i < effects.list.length; i++) {
+    if (!effects.list[i].isBackground) {
+      continue
     }
-    ctx.globalCompositeOperation = 'source-atop'
-    var background = false
-    for (var i = 0; i < editor.effects.length; i++) {
-      if (editor.effects[i].type !== 0) continue
-      if (editor.effects[i].name == 'background-color') background = true
-      editor.effects[i].run(ctx)
-    }
-    if (background) {
-      ctx.globalCompositeOperation = 'source-atop'
-    } else {
-      ctx.globalCompositeOperation = 'source-in'
-    }
-    ctx.drawImage(editor.tokenImage, editor.tokenImageLeft, editor.tokenImageTop, editor.tokenImage.width * editor.tokenImageZoom, editor.tokenImage.height * editor.tokenImageZoom)
-    for (var i = 0; i < editor.effects.length; i++) {
-      if (editor.effects[i].type !== 1) continue
-      editor.effects[i].run(ctx)
-    }
+    effects.list[i].run(editor)
+  }
+  // render token
+  var targetWidth = editor.tokenImage.width * editor.tokenImageZoom
+  var targetHeight = editor.tokenImage.height * editor.tokenImageZoom
+  ctx.drawImage(editor.tokenImage, editor.tokenImageLeft, editor.tokenImageTop, targetWidth, targetHeight)
+  // render foreground effects
+  for (var i = 0; i < effects.list.length; i++) {
+    if (effects.list[i].isBackground) continue
+    effects.list[i].run(editor)
   }
   if (editor.borderImage.width > 0) {
+    // alpha mask
+    ctx.globalCompositeOperation = 'destination-in'
+    ctx.drawImage(editor.borderImage, editor.borderImage.width/2, 0, editor.borderImage.width/2, editor.borderImage.height, 0, 0, editor.borderImage.width/2, editor.borderImage.height)
     ctx.globalCompositeOperation = 'source-over'
     ctx.drawImage(editor.borderImage, 0, 0, editor.borderImage.width/2, editor.borderImage.height, 0, 0, editor.borderImage.width/2, editor.borderImage.height)
   }
   ctx.globalCompositeOperation = 'source-over'
   if (!editor.isDragging && editor.tokenImage.width == 0) {
-    ctx.font = '20pt Oswald'
+    ctx.font = '32pt Bowlby One SC'
+    ctx.lineWidth = 2;
     ctx.textAlign = 'center'
     ctx.fillStyle = '#000'
     ctx.strokeStyle = '#fff'
-    ctx.fillText('Drop Image here', editor.dom.width/2, editor.dom.height/2)
-    ctx.strokeText('Drop Image here', editor.dom.width/2, editor.dom.height/2)
+    var name = names[rand(0, names.length)]
+    ctx.fillText('Drop '+name+' here', editor.dom.width/2, editor.dom.height/2+16)
+    ctx.strokeText('Drop '+name+' here', editor.dom.width/2, editor.dom.height/2+16)
   } else {
     ctx.drawImage(editor.overlay, 0, 0)
   }
@@ -272,19 +301,152 @@ editor.on('update', function() {
   editor.emit('render')
   return this
 })
+
+var effects = new ktk.Emitter()
+effects.domAdd    = null
+effects.domSelect = null
+effects.domList   = null
+effects.available = []
+effects.list      = []
+effects.listDoms  = []
+effects.on('init', function(dom) {
+  effects.domAdd = dom.querySelector('#tokenr-editor-effects-add')
+  effects.domSelect = dom.querySelector('#tokenr-editor-effects-select')
+  effects.domList = dom.querySelector('#tokenr-editor-effects-list')
+
+  effects.domAdd.addEventListener('click', function(e) {
+    effects.emit('add', effects.domSelect.selectedIndex)
+  })
+})
+effects.on('import', function(obj) {
+  var opt = document.createElement('option')
+  opt.text = obj.name
+  effects.domSelect.add(opt)
+  effects.available.push(obj)
+})
+effects.on('add', function(index) {
+  if (index < 0 || index >= effects.available.length) return
+  var effect = Object.assign({}, effects.available[index])
+  var effect_view = effect.view(editor);
+  var el = effects.fab('div', {className: 'tokenr-effects-item'})
+  var elBackground = effects.fab('input', {type: 'checkbox', checked: effect.isBackground})
+  elBackground.addEventListener('change', function(e) {
+    effect.isBackground = e.target.checked
+    editor.emit('render')
+  })
+  el.appendChild(elBackground)
+  for (var i = 0; i < effect_view.length; i++) {
+    el.appendChild(effect_view[i])
+  }
+  var _index = effects.list.length
+  el.appendChild(effects.fab('input', {
+    type: 'button', value: 'remove', onclick: function(e) {
+      effects.emit('rem', el)
+    }
+  }))
+  effects.domList.appendChild(el)
+  effects.listDoms.push(el)
+  effects.list.push(effect)
+  editor.emit('render')
+})
+effects.on('rem', function(el) {
+  var index = effects.listDoms.indexOf(el)
+  if (index == -1) return
+  effects.listDoms[index].parentNode.removeChild(effects.listDoms[index])
+  effects.listDoms.splice(index, 1)
+  effects.list.splice(index, 1)
+  editor.emit('render')
+})
 // effects - background, colorize, inner-shadow, outer-shadow
+effects.fab = function(tag, props) {
+  var el = document.createElement(tag)
+  Object.assign(el, props)
+  return el
+}
 /* ================================ PUBLIC ================================ */
 return {
-  init: function(editorDom) {
-    editor.emit('init', editorDom).emit('update')
-    /*editor.effects.push({
-      type: 0,
-      name: 'background-color',
-      run: function(ctx) {
-        ctx.fillStyle = '#FF0000'
+  init: function(dom) {
+    editor.emit('init', dom.querySelector('#tokenr-editor')).emit('update')
+    effects.emit('init', dom.querySelector('#tokenr-editor-effects'))
+    effects.emit('import', {
+      isBackground: true,
+      name: 'color fill',
+      color: '#000',
+      alpha: 1.0,
+      run: function(editor) {
+        ctx = editor.dom.getContext('2d')
+        ctx.globalAlpha = this.alpha
+        ctx.fillStyle = this.color
         ctx.fillRect(0, 0, editor.dom.width, editor.dom.height)
+        ctx.globalAlpha = 1.0
+      },
+      view: function(editor) {
+        var self = this
+        var color = effects.fab('input', {
+          type: 'color',
+          oninput: function(e) {
+            self.color = e.target.value
+            editor.emit('render')
+          }
+        })
+        var alphaSlider = effects.fab('input', {
+          type: 'range',
+          size: 3,
+          min: 0,
+          max: 100,
+          step: 1,
+          value: 100,
+          oninput: function(e) {
+            self.alpha = parseInt(alphaSlider.value)/100
+            editor.emit('render')
+          }
+        })
+        return [color, alphaSlider]
       }
-    })*/
+    })
+    effects.emit('import', {
+      name: 'linear gradient',
+      isBackground: false,
+      aAlpha: 1.0,
+      aColor: '#000000',
+      bAlpha: 0.0,
+      bColor: '#000000',
+      run: function(editor) {
+        function hexToRgb(hex) {
+          var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+          } : null;
+        }
+        var ctx = editor.dom.getContext('2d')
+        var gradient = ctx.createLinearGradient(0, 0, 0, editor.dom.height)
+        var aColor = hexToRgb(this.aColor)
+        var bColor = hexToRgb(this.bColor)
+        gradient.addColorStop(0, 'rgba('+aColor.r+','+aColor.g+','+aColor.b+', '+this.aAlpha+')')
+        gradient.addColorStop(1, 'rgba('+bColor.r+','+bColor.g+','+bColor.b+', '+this.bAlpha+')')
+        ctx.fillStyle = gradient
+        ctx.fillRect(0, 0, editor.dom.width, editor.dom.height)
+      },
+      view: function(editor) {
+        var self = this
+        var containerA = effects.fab('div')
+        var colorA  = effects.fab('input', { type: 'color' })
+        colorA.oninput = function(e) { self.aColor = e.target.value; editor.emit('render') }
+        var alphaA = effects.fab('input', { type: 'range', min: 0, max: 100, step: 1, value: 100 })
+        alphaA.oninput = function(e) { self.aAlpha = e.target.value / 100; editor.emit('render') }
+        containerA.appendChild(colorA); containerA.appendChild(alphaA)
+
+        var containerB = effects.fab('div')
+        var colorB  = effects.fab('input', { type: 'color' })
+        colorB.oninput = function(e) { self.bColor = e.target.value; editor.emit('render') }
+        var alphaB = effects.fab('input', { type: 'range', min: 0, max: 100, step: 1, value: 0 })
+        alphaB.oninput = function(e) { self.bAlpha = e.target.value / 100; editor.emit('render') }
+        containerB.appendChild(colorB); containerB.appendChild(alphaB);
+        return [containerA, containerB]
+      }
+    })
   }
 }
 })()

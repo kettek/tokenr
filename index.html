@@ -4,31 +4,26 @@
   <script type='text/javascript' src='tokenr.js'></script>
   <script type='text/javascript'>
   window.addEventListener('load', function() {
-    ktk.Tokenr.init(document.getElementById('tokenr-editor'))
+    ktk.Tokenr.init(document.getElementById('tokenr-container'))
   })
   </script>
-  <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet"> 
+  <link href="https://fonts.googleapis.com/css?family=Bowlby+One+SC|Open+Sans" rel="stylesheet">
   <style type='text/css'>
-    body { margin: 0;}
+    body { margin: 0; font-family: 'Open Sans', sans-serif }
+    h1,h2,h3,h4,h5,h6 { font-family: 'Bowlby One SC', cursive }
     html {
       min-height: 100%;
     }
     #tokenr-container {
       height: 100%;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
+      align-content: flex-start; 
       justify-content: center;
-    }
-    .flex-item {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
     }
     #tokenr-editor {
-      min-width: 512px;
-      min-height: 512px;
+      width: 512px;
+      height: 512px;
       background-color: #606060;
       background-image: linear-gradient(45deg, #a0a0a0 25%, transparent 25%), linear-gradient(-45deg, #a0a0a0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #a0a0a0 75%), linear-gradient(-45deg, transparent 75%, #a0a0a0 75%);
       background-size: 60px 60px;
@@ -45,7 +40,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 50%;
     }
     #tokenr-scale-field {
       width: 3em;
@@ -53,14 +47,37 @@
     #tokenr-scale-range {
       flex: 1;
     }
+    .rows {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+    }
+    .cols {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    #tokenr-editor-effects {
+      flex: 1;
+    }
+    #tokenr-editor-view {
+      flex: 2;
+    }
   </style>
 </head>
 <body>
-<div id='tokenr-container'>
-  <div class='flex-item' id='tokenr-editor-container'>
-    <div id='tokenr-editor-controls'><input type='number' id='tokenr-scale-field' /><input type='range' id='tokenr-scale-range' min='1' value='100' max='500' step='1' /><button id='tokenr-editor-save'>Save</button></div>
-    <canvas id='tokenr-editor'></canvas>
+<div id='tokenr-container' class='rows'>
+  <div id='tokenr-editor-container' class='rows'>
+    <div id='tokenr-editor-effects' class='cols'>
+      <div class='rows'><select id='tokenr-editor-effects-select' style="flex: 1"></select><input id='tokenr-editor-effects-add' type='submit' value='Add' /></div>
+      <div id='tokenr-editor-effects-list' class='cols'></div>
+    </div>
+    <div id='tokenr-editor-view' class='cols'>
+      <div id='tokenr-editor-controls'><input type='number' id='tokenr-scale-field' /><input type='range' id='tokenr-scale-range' min='1' value='100' max='500' step='1' /><button id='tokenr-editor-save'>Save</button></div>
+      <canvas id='tokenr-editor'></canvas>
+    </div>
   </div>
 </div>
+<h6>&nbsp;</h6>
 </body>
 </html>
