@@ -339,6 +339,7 @@ effects.on('add', function(index) {
   for (var i = 0; i < effect_view.length; i++) {
     itemContent.appendChild(effect_view[i])
   }
+  itemContainer.appendChild(effects.fab('div', {className: 'tokenr-editor-effects-item-move'}))
   itemContainer.appendChild(itemContent)
   var _index = effects.list.length
   itemContainer.appendChild(effects.fab('input', {
