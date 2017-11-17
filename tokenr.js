@@ -387,6 +387,7 @@ return {
       sizeY: null,
       mouseDown: null,
       mouseWheel: null,
+      wheelEvent: '',
       run: function(editor) {
         var self = this
         ctx = editor.dom.getContext('2d');
@@ -394,8 +395,7 @@ return {
       },
       remove: function(editor) {
         editor.dom.removeEventListener('mousedown', this.mouseDown);
-        editor.dom.removeEventListener('mousewheel', this.mouseWheel);
-        editor.dom.removeEventListener('DOMMouseScroll', this.mouseWheel);
+        editor.dom.removeEventListener(this.wheelEvent, this.mouseWheel);
       },
       setup: function(editor) {
         var self = this;
@@ -430,28 +430,24 @@ return {
           document.removeEventListener('mouseout', mouseUp);
         }
         editor.dom.addEventListener('mousedown', self.mouseDown);
-        //
-        var lastWheelMoveTime = 0;
+        self.wheelEvent = "onwheel" in document.createElement("div") ? "wheel" : document.onmousewheel !== undefined ? "mousewheel" : "DOMMouseScroll";
         self.mouseWheel = function(e) {
           e.preventDefault();
-          var move = (e.detail ? e.detail < 0 ? 1 : -1 : e.wheelDelta < 0 ? -1 : 1)
-      
-          var wheelMoveTime = new Date().getTime();
-          var deltaMoveTime = wheelMoveTime - (lastWheelMoveTime == 0 ? wheelMoveTime : lastWheelMoveTime);
-          // only accelerate if wheeltime was < 25ms
-          if (deltaMoveTime < 25) {
-            move *= deltaMoveTime;
+          var deltaY = 0;
+          if (self.wheelEvent == 'mousewheel') {
+            deltaY = - 1/40 * e.wheelDelta
+          } else {
+            deltaY = e.deltaY || e.detail
           }
-          lastWheelMoveTime = wheelMoveTime;
-
-          var scale_x = editor.dom.width / editor.dom.offsetHeight
-      
-          self.sizeX.value = parseInt(self.sizeX.value) + (move * scale_x)
-          self.sizeY.value = parseInt(self.sizeY.value) + (move * scale_x)
+          var scale = editor.dom.height / editor.dom.offsetHeight
+          deltaY *= scale;
+          self.sizeX.value = parseInt(self.sizeX.value) + deltaY
+          self.sizeY.value = parseInt(self.sizeY.value) + deltaY
+          self.offsetX.value = parseInt(self.offsetX.value) - (deltaY / 2);
+          self.offsetY.value = parseInt(self.offsetY.value) - (deltaY / 2);
           editor.emit('render')
         }
-        editor.dom.addEventListener('mousewheel', self.mouseWheel, false)
-        editor.dom.addEventListener('DOMMouseScroll', self.mouseWheel, false)
+        editor.dom.addEventListener(self.wheelEvent, self.mouseWheel, false);
       },
       view: function(editor) {
         var self = this
