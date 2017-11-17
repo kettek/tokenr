@@ -54,20 +54,12 @@ var name = names[rand(0, names.length)]
 var editor = new ktk.Emitter()
 /* ======== Properties ======== */
 editor.dom          = null
-editor.tokenImage   = new Image()
-editor.tokenImageLeft   = 0
-editor.tokenImageTop    = 0
-editor.tokenImageZoom   = 1
-editor.lastWheelMoveTime  = 0
-editor.lastMousePositionX = 0
-editor.lastMousePositionY = 0
 editor.isDragging         = false
-editor.borderImage  = new Image()
-editor.borderImageLeft  = 0
-editor.borderImageTop   = 0
 editor.backBuffer   = document.createElement('canvas')
 editor.overlay      = document.createElement('canvas')
 editor.transparentColor = [255, 0, 255]
+editor.desiredWidth = 1024;
+editor.desiredHeight = 1024;
 /* ======== Methods ======== */
 editor.on('init', function(dom) {
   editor.dom = dom
@@ -135,9 +127,9 @@ editor.on('init', function(dom) {
         src = src.split('\n')[0]
         if (x >= w && x <= editor.dom.width-w
             && y >= h && y <= editor.dom.height-h) {
-          editor.tokenImage.src = src
+          //editor.tokenImage.src = src
         } else {
-          editor.borderImage.src = src
+          //editor.borderImage.src = src
         }
       })
     } else {
@@ -149,9 +141,9 @@ editor.on('init', function(dom) {
         reader.onload = function (e) {
           if (x >= w && x <= editor.dom.width-w
               && y >= h && y <= editor.dom.height-h) {
-            editor.tokenImage.src = e.target.result
+            //editor.tokenImage.src = e.target.result
           } else {
-            editor.borderImage.src = e.target.result
+            //editor.borderImage.src = e.target.result
           }
         }
         reader.readAsDataURL(src)
@@ -160,77 +152,6 @@ editor.on('init', function(dom) {
     editor.isDragging = false
     editor.emit('render')
   }, true)
-  editor.tokenImage.addEventListener('load', function() {
-    editor.tokenImageLeft = Math.floor(editor.dom.width/2 - editor.tokenImage.width*editor.tokenImageZoom/2)
-    editor.tokenImageTop = Math.floor(editor.dom.height/2 - editor.tokenImage.height*editor.tokenImageZoom/2)
-    editor.emit('render')
-  }, true)
-  editor.borderImage.addEventListener('load', function() {
-    editor.borderImageLeft = Math.floor(editor.dom.width/2 - editor.borderImage.width/4)
-    editor.borderImageTop = Math.floor(editor.dom.height/2 - editor.borderImage.height/2)
-    editor.dom.width  = editor.borderImage.width/2
-    editor.dom.height = editor.borderImage.height
-    editor.emit('render')
-  }, true)
-  // create default border image
-  ;(function() {
-    editor.backBuffer.width = 1024;
-    editor.backBuffer.height = 512;
-    ctx = editor.backBuffer.getContext('2d')
-    // stroke our alpha mask
-    ctx.beginPath()
-    ctx.arc(768, 256, 246, 246, Math.PI*2, true)
-    ctx.closePath()
-    ctx.fill()
-    // stroke our border
-    ctx.beginPath()
-    ctx.lineWidth = 10
-    ctx.arc(256, 256, 246, 246, Math.PI*2, true)
-    ctx.closePath()
-    ctx.stroke()
-    editor.borderImage.src = editor.backBuffer.toDataURL()
-  })()
-  // mouse functionality
-  function onMouseMove(e) {
-    var x = e.clientX - editor.lastMousePositionX
-    var y = e.clientY - editor.lastMousePositionY
-    editor.tokenImageLeft += x
-    editor.tokenImageTop += y
-    editor.lastMousePositionX = e.clientX
-    editor.lastMousePositionY = e.clientY
-    editor.emit('render')
-  }
-  function onMouseDown(e) {
-    e.preventDefault()
-
-    editor.lastMousePositionX = e.clientX
-    editor.lastMousePositionY = e.clientY
-    dom.addEventListener('mousemove', onMouseMove, false)
-    window.addEventListener('mouseup', onMouseUp, false)
-  }
-  function onMouseUp(e) {
-    dom.removeEventListener('mousemove', onMouseMove)
-    window.removeEventListener('mouseup', onMouseUp)
-  }
-  dom.addEventListener('mousedown', onMouseDown, false)
-  function onMouseWheel(e) {
-    e.preventDefault();
-    var move = (e.detail ? e.detail < 0 ? 1 : -1 : e.wheelDelta < 0 ? -1 : 1)
-
-    var wheelMoveTime = new Date().getTime();
-    var deltaMoveTime = wheelMoveTime - (editor.lastWheelMoveTime == 0 ? wheelMoveTime : editor.lastWheelMoveTime);
-    // only accelerate if wheeltime was < 15ms
-    if (deltaMoveTime < 15) {
-      move *= deltaMoveTime;
-    }
-    editor.lastWheelMoveTime = wheelMoveTime;
-
-    field.value = parseInt(field.value) + move;
-    var event = new Event('input');
-    field.dispatchEvent(event)
-  }
-  dom.addEventListener('mousewheel', onMouseWheel, false);
-  dom.addEventListener('DOMMouseScroll', onMouseWheel, false);
   // field functionality
   var range   = document.getElementById('tokenr-scale-range')
   var field   = document.getElementById('tokenr-scale-field')
@@ -241,14 +162,23 @@ editor.on('init', function(dom) {
   })
   field.value = range.value
   field.addEventListener('input', function(e) {
-    var last = editor.tokenImageZoom
+    /*var last = editor.tokenImageZoom
     range.value = field.value
     editor.tokenImageZoom = parseInt(field.value) / 100
     editor.tokenImageLeft += (editor.tokenImage.width/2) * (last - editor.tokenImageZoom) 
-    editor.tokenImageTop += (editor.tokenImage.height/2) * (last - editor.tokenImageZoom) 
+    editor.tokenImageTop += (editor.tokenImage.height/2) * (last - editor.tokenImageZoom) */
     editor.emit('render')
   })
-  editor.tokenImageZoom = parseInt(field.value) / 100
+  //editor.tokenImageZoom = parseInt(field.value) / 100
+  var width = document.getElementById('tokenr-output-width');
+  var height = document.getElementById('tokenr-output-height');
+  width.addEventListener('input', function(e) {
+    editor.desiredWidth = parseInt(e.target.value);
+    height.value = e.target.value;
+    editor.emit('update');
+  });
+  height.addEventListener('input', function(e) {
+  });
 })
 editor.on('render', function() {
   ctx = editor.dom.getContext('2d')
@@ -262,24 +192,12 @@ editor.on('render', function() {
     }
     effects.list[i].run(editor)
   }
-  // render token
-  var targetWidth = editor.tokenImage.width * editor.tokenImageZoom
-  var targetHeight = editor.tokenImage.height * editor.tokenImageZoom
-  ctx.drawImage(editor.tokenImage, editor.tokenImageLeft, editor.tokenImageTop, targetWidth, targetHeight)
   // render foreground effects
   for (var i = 0; i < effects.list.length; i++) {
     if (effects.list[i].isBackground) continue
     effects.list[i].run(editor)
   }
-  if (editor.borderImage.width > 0) {
-    // alpha mask
-    ctx.globalCompositeOperation = 'destination-in'
-    ctx.drawImage(editor.borderImage, editor.borderImage.width/2, 0, editor.borderImage.width/2, editor.borderImage.height, 0, 0, editor.borderImage.width/2, editor.borderImage.height)
-    ctx.globalCompositeOperation = 'source-over'
-    ctx.drawImage(editor.borderImage, 0, 0, editor.borderImage.width/2, editor.borderImage.height, 0, 0, editor.borderImage.width/2, editor.borderImage.height)
-  }
-  ctx.globalCompositeOperation = 'source-over'
-  if (!editor.isDragging && editor.tokenImage.width == 0) {
+  /*if (!editor.isDragging && editor.tokenImage.width == 0) {
     ctx.font = '32pt Bowlby One SC'
     ctx.lineWidth = 2;
     ctx.textAlign = 'center'
@@ -289,15 +207,24 @@ editor.on('render', function() {
     ctx.strokeText('Drop '+name+' here', editor.dom.width/2, editor.dom.height/2+16)
   } else {
     ctx.drawImage(editor.overlay, 0, 0)
-  }
+  }*/
 })
 editor.on('update', function() {
-  editor.dom.width   = parseInt(editor.dom.offsetWidth)
-  editor.dom.height  = parseInt(editor.dom.offsetHeight)
-  editor.backBuffer.width = editor.dom.width
-  editor.backBuffer.height = editor.dom.height
-  editor.overlay.width = editor.dom.width
-  editor.overlay.height = editor.dom.height
+  /*var pow_width = parseInt(editor.dom.offsetWidth)-1
+  pow_width |= pow_width >> 1; pow_width |= pow_width >> 2;
+  pow_width |= pow_width >> 4; pow_width |= pow_width >> 8;
+  pow_width |= pow_width >> 16; pow_width++;
+
+  editor.dom.width = pow_width
+  editor.dom.height = pow_width*/
+  editor.dom.width = editor.desiredWidth;
+  editor.dom.height = editor.desiredWidth;
+
+  // Update our effects if they desire
+  for (var i = 0; i < effects.list.length; i++) {
+    if (effects.list[i].update) effects.list[i].update(editor);
+  }
+
   editor.emit('render')
   return this
 })
@@ -327,9 +254,10 @@ effects.on('import', function(obj) {
 effects.on('add', function(index) {
   if (index < 0 || index >= effects.available.length) return
   var effect = Object.assign({}, effects.available[index])
-  var effect_view = effect.view(editor);
+  var effect_setup = effect.setup ? effect.setup(editor) : null;
+  var effect_view = effect.view(editor) || [];
   var itemContainer = effects.fab('div', {className: 'tokenr-editor-effects-item'})
-  var itemContent = effects.fab('div', {className: 'tokenr-editor-effects-item-content'})
+  var itemContent = effects.fab('div', {className: (effect.containerType ? effect.containerType+' ' : '') + 'tokenr-editor-effects-item-content'})
   var elBackground = effects.fab('input', {type: 'checkbox', checked: effect.isBackground})
   elBackground.addEventListener('change', function(e) {
     effect.isBackground = e.target.checked
@@ -350,11 +278,13 @@ effects.on('add', function(index) {
   effects.domList.appendChild(itemContainer)
   effects.listDoms.push(itemContainer)
   effects.list.push(effect)
+  effect.index = effects.list.length-1;
   editor.emit('render')
 })
 effects.on('rem', function(el) {
   var index = effects.listDoms.indexOf(el)
   if (index == -1) return
+  if (effects.list[index].remove) effects.list[index].remove(editor);
   effects.listDoms[index].parentNode.removeChild(effects.listDoms[index])
   effects.listDoms.splice(index, 1)
   effects.list.splice(index, 1)
@@ -370,7 +300,221 @@ effects.fab = function(tag, props) {
 return {
   init: function(dom) {
     editor.emit('init', dom.querySelector('#tokenr-editor')).emit('update')
+    window.addEventListener('resize', function() {
+      editor.emit('update');
+    });
     effects.emit('init', dom.querySelector('#tokenr-editor-effects'))
+    effects.emit('import', {
+      name: 'border stroke',
+      image: null,
+      canvas: null,
+      width: null,
+      color: null,
+      isBackground: false,
+      setup: function(editor) {
+        var self = this;
+        self.image = new Image();
+        self.image.onload = function() {
+          editor.emit('render');
+        }
+        self.canvas = document.createElement('canvas');
+      },
+      update: function(editor) {
+        var self = this;
+        var w = editor.dom.width
+        var hw = editor.dom.width/2
+        var h = editor.dom.height
+        var hh = editor.dom.height/2
+        var lw = parseInt(self.width.value)
+        self.canvas.width = w*2
+        self.canvas.height = h
+        ctx = self.canvas.getContext('2d')
+        // stroke our alpha mask
+        ctx.beginPath()
+        ctx.arc(w+hw, hh, hw-lw, 0, Math.PI*2, true)
+        ctx.closePath()
+        ctx.fill()
+        // stroke our border
+        ctx.beginPath()
+        ctx.strokeStyle = self.color.value;
+        ctx.lineWidth = lw
+        ctx.arc(hw, hh, hw-lw, 0, Math.PI*2, true)
+        ctx.closePath()
+        ctx.stroke()
+        self.image.src = self.canvas.toDataURL();
+      },
+      run: function(editor) {
+        var self = this;
+        var ctx = editor.dom.getContext('2d');
+        ctx.globalCompositeOperation = 'destination-in'
+        ctx.drawImage(self.image, self.image.width/2, 0, self.image.width/2, self.image.height, 0, 0, self.image.width/2, self.image.height)
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.drawImage(self.image, 0, 0, self.image.width/2, self.image.height, 0, 0, self.image.width/2, self.image.height)
+        ctx.globalCompositeOperation = 'source-over'
+      },
+      view: function(editor) {
+        var self = this;
+        self.color = effects.fab('input', {
+          type: 'color',
+          value: '#fff',
+          oninput: function(e) {
+            self.update(editor);
+            editor.emit('render');
+          }
+        });
+        self.width = effects.fab('input', {
+          type: 'number',
+          style: 'width: 4em',
+          value: 10,
+          oninput: function(e) {
+            self.update(editor);
+            editor.emit('render');
+          }
+        });
+        self.update(editor);
+        return [self.color, self.width];
+      }
+    });
+    effects.emit('import', {
+      isBackground: false,
+      name: 'image',
+      src: null,
+      loadListener: null,
+      image: null,
+      offsetX: null,
+      offsetY: null,
+      sizeX: null,
+      sizeY: null,
+      mouseDown: null,
+      mouseWheel: null,
+      run: function(editor) {
+        var self = this
+        ctx = editor.dom.getContext('2d');
+        ctx.drawImage(self.image, self.offsetX.value, self.offsetY.value, self.sizeX.value, self.sizeY.value);
+      },
+      remove: function(editor) {
+        editor.dom.removeEventListener('mousedown', this.mouseDown);
+        editor.dom.removeEventListener('mousewheel', this.mouseWheel);
+        editor.dom.removeEventListener('DOMMouseScroll', this.mouseWheel);
+      },
+      setup: function(editor) {
+        var self = this;
+        var mouse_x = 0;
+        var mouse_y = 0;
+        function mouseMove(e) {
+          var scale_x = editor.dom.width / editor.dom.offsetHeight
+          var scale_y = editor.dom.height / editor.dom.offsetHeight
+          var delta_x = mouse_x - (e.screenX * scale_x)
+          var delta_y = mouse_y - (e.screenY * scale_y)
+          self.offsetX.value = parseInt(self.offsetX.value) - delta_x
+          self.offsetY.value = parseInt(self.offsetY.value) - delta_y
+          mouse_x = (e.screenX * scale_x)
+          mouse_y = (e.screenY * scale_y)
+          editor.emit('render')
+        }
+        self.mouseDown = function(e) {
+          e.preventDefault();
+          editor.dom.addEventListener('mousemove', mouseMove);
+          editor.dom.addEventListener('mouseup', mouseUp);
+          document.addEventListener('mouseout', mouseUp);
+          var scale_x = editor.dom.width / editor.dom.offsetHeight
+          var scale_y = editor.dom.height / editor.dom.offsetHeight
+          mouse_x = e.screenX * scale_x;
+          mouse_y = e.screenY * scale_y;
+        }
+        function mouseUp(e) {
+          self.offsetX.value = Math.round(self.offsetX.value);
+          self.offsetY.value = Math.round(self.offsetY.value);
+          editor.dom.removeEventListener('mouseup', mouseUp);
+          editor.dom.removeEventListener('mousemove', mouseMove);
+          document.removeEventListener('mouseout', mouseUp);
+        }
+        editor.dom.addEventListener('mousedown', self.mouseDown);
+        //
+        var lastWheelMoveTime = 0;
+        self.mouseWheel = function(e) {
+          e.preventDefault();
+          var move = (e.detail ? e.detail < 0 ? 1 : -1 : e.wheelDelta < 0 ? -1 : 1)
+      
+          var wheelMoveTime = new Date().getTime();
+          var deltaMoveTime = wheelMoveTime - (lastWheelMoveTime == 0 ? wheelMoveTime : lastWheelMoveTime);
+          // only accelerate if wheeltime was < 25ms
+          if (deltaMoveTime < 25) {
+            move *= deltaMoveTime;
+          }
+          lastWheelMoveTime = wheelMoveTime;
+
+          var scale_x = editor.dom.width / editor.dom.offsetHeight
+      
+          self.sizeX.value = parseInt(self.sizeX.value) + (move * scale_x)
+          self.sizeY.value = parseInt(self.sizeY.value) + (move * scale_x)
+          editor.emit('render')
+        }
+        editor.dom.addEventListener('mousewheel', self.mouseWheel, false)
+        editor.dom.addEventListener('DOMMouseScroll', self.mouseWheel, false)
+      },
+      view: function(editor) {
+        var self = this
+        self.src = effects.fab('input', {
+          value: '',
+          oninput: function(e) {
+            self.image.src = e.target.value;
+          }
+        })
+        self.image = effects.fab('img', {
+          onload: function(e) {
+            self.sizeX.value = self.image.naturalWidth ? self.image.naturalWidth : 512;
+            self.sizeY.value = self.image.naturalHeight ? self.image.naturalHeight : 512;
+            self.offsetX.value = Math.floor(editor.dom.width/2 - self.sizeX.value/2);
+            self.offsetY.value = Math.floor(editor.dom.height/2 - self.sizeY.value/2);
+            editor.emit('render');
+          }
+        })
+        var offsetContainer = effects.fab('div');
+        self.offsetX = effects.fab('input', {
+          type: 'number',
+          style: 'width: 4em',
+          value: 0,
+          oninput: function() {
+            editor.emit('render')
+          }
+        });
+        self.offsetY = effects.fab('input', {
+          type: 'number',
+          style: 'width: 4em',
+          value: 0,
+          oninput: function() {
+            editor.emit('render')
+          }
+        });
+        offsetContainer.appendChild(self.offsetX);
+        offsetContainer.appendChild(self.offsetY);
+
+        var sizeContainer = effects.fab('div');
+        self.sizeX = effects.fab('input', {
+          type: 'number',
+          style: 'width: 4em',
+          value: '512',
+          oninput: function() {
+            editor.emit('render')
+          }
+        })
+        self.sizeY = effects.fab('input', {
+          type: 'number',
+          style: 'width: 4em',
+          value: '512',
+          oninput: function() {
+            editor.emit('render')
+          }
+        })
+        sizeContainer.appendChild(self.sizeX)
+        sizeContainer.appendChild(self.sizeY)
+        var containers = effects.fab('div', { className: 'cols' })
+        containers.appendChild(offsetContainer)
+        containers.appendChild(sizeContainer)
+        return [self.image, self.src, containers]
+      }
+    })
     effects.emit('import', {
       isBackground: true,
       name: 'color fill',
@@ -414,6 +558,7 @@ return {
       aColor: '#000000',
       bAlpha: 0.0,
       bColor: '#000000',
+      containerType: 'cols',
       run: function(editor) {
         function hexToRgb(hex) {
           var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);

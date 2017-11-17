@@ -11,8 +11,21 @@
   <style type='text/css'>
     body { margin: 0; font-family: 'Open Sans', sans-serif }
     h1,h2,h3,h4,h5,h6 { font-family: 'Bowlby One SC', cursive }
+    * {
+      box-sizing: border-box;
+    }
     html {
       min-height: 100%;
+    }
+    label {
+      color: #fff;
+      display: table-cell;
+      vertical-align: middle;
+      padding: 0 1em; padding: 0 1vw;
+    }
+    input {
+      margin: 1em; margin: 1vw;
+      padding: .25em; padding: .25vw;
     }
     #tokenr-container {
       height: 100%;
@@ -23,8 +36,10 @@
       justify-content: center;
     }
     #tokenr-editor {
-      width: 512px;
-      height: 512px;
+      flex: 1;
+      object-fit: contain; 
+      width: 50vw;
+      height: 50vw;
       background-color: #606060;
       background-image: linear-gradient(45deg, #a0a0a0 25%, transparent 25%), linear-gradient(-45deg, #a0a0a0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #a0a0a0 75%), linear-gradient(-45deg, transparent 75%, #a0a0a0 75%);
       background-size: 60px 60px;
@@ -38,7 +53,7 @@
       background-color: #111;
       width: 100%;
     }
-    #tokenr-editor-controls {
+    #tokenr-editor-settings {
       display: flex;
       align-items: center;
       justify-content: center;
@@ -47,7 +62,10 @@
       width: 3em;
     }
     #tokenr-scale-range {
+      width: 3em;
       flex: 1;
+      writing-mode: bt-lr; /* IE */
+      -webkit-appearance: slider-vertical; /* WebKit */
     }
     .rows {
       display: flex;
@@ -72,6 +90,25 @@
       background-color: #999;
     }
     .tokenr-editor-effects-item-content {
+      padding: 1em; padding: 1vw;
+      display: flex;
+      align-items: stretch;
+      flex: 1;
+    }
+    .tokenr-editor-effects-item-content img {
+      height: 64px;
+    }
+    .tokenr-editor-effects-item-content input {
+      display: table-cell;
+      vertical-align: middle;
+    }
+    .tokenr-editor-effects-item-content div {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      flex: 1;
+    }
+    .tokenr-editor-effects-item-content input[type=range] {
       flex: 1;
     }
     .tokenr-editor-effects-item-add {
@@ -85,8 +122,17 @@
       background-color: #646464;
       cursor: move;
     }
+    .tokenr-editor-effects-item input {
+      margin: 0; padding: 0;
+    }
     #tokenr-editor-view {
       flex: 2;
+    }
+    #tokenr-output-width {
+      width: 4em;
+    }
+    #tokenr-output-height {
+      width: 4em;
     }
   </style>
 </head>
@@ -98,8 +144,17 @@
       <div id='tokenr-editor-effects-list' class='cols'></div>
     </div>
     <div id='tokenr-editor-view' class='cols'>
-      <div id='tokenr-editor-controls'><input type='number' id='tokenr-scale-field' /><input type='range' id='tokenr-scale-range' min='1' value='100' max='500' step='1' /><button id='tokenr-editor-save'>Save</button></div>
-      <canvas id='tokenr-editor'></canvas>
+      <div id='tokenr-editor-settings'>
+        <div>
+          <label>output: <input type='number' id='tokenr-output-width' value=1024 />x<input type='number' id='tokenr-output-height' value=1024 disabled /></label>
+        </div>
+        <button id='tokenr-editor-save'>Save</button>
+      </div>
+      <div class='rows' id='tokenr-editor-view-container'>
+        <canvas id='tokenr-editor'></canvas>
+        <div class='cols' id='tokenr-editor-view-controls'>
+          <input type='number' id='tokenr-scale-field' /><input type='range' id='tokenr-scale-range' min='1' value='100' max='500' step='1' />
+      </div>
     </div>
   </div>
 </div>
