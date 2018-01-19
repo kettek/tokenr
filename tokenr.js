@@ -254,8 +254,9 @@ effects.on('import', function(obj) {
 effects.on('add', function(index) {
   if (index < 0 || index >= effects.available.length) return
   var effect = Object.assign({}, effects.available[index])
-  var effect_setup = effect.setup ? effect.setup(editor) : null;
-  var effect_view = effect.view(editor) || [];
+  var effect_setup = effect.setup ? effect.setup(editor) : null
+  var effect_view = effect.view(editor) || []
+  var selected_index = -1
   var itemContainer = effects.fab('div', {className: 'tokenr-editor-effects-item'})
   var itemContent = effects.fab('div', {className: (effect.containerType ? effect.containerType+' ' : '') + 'tokenr-editor-effects-item-content'})
   var elBackground = effects.fab('input', {type: 'checkbox', checked: effect.isBackground})
@@ -267,9 +268,52 @@ effects.on('add', function(index) {
   for (var i = 0; i < effect_view.length; i++) {
     itemContent.appendChild(effect_view[i])
   }
-  itemContainer.appendChild(effects.fab('div', {className: 'tokenr-editor-effects-item-move'}))
+  function syncList() {
+    var remap = [], list = [], listDoms = [];
+    for (var i = 0; i < effects.listDoms.length; i++) {
+      remap.push([i, Array.prototype.indexOf.call(effects.domList.children, effects.listDoms[i])]);
+    }
+    for (var i = 0; i < remap.length; i++) {
+      list[remap[i][1]] = effects.list[remap[i][0]];
+      listDoms[remap[i][1]] = effects.listDoms[remap[i][0]];
+    }
+    effects.list = list;
+    effects.listDoms = listDoms;
+    editor.emit('render')
+  }
+  // DODGY item movement code
+  function mouseUp(e) {
+    window.removeEventListener('mouseup', mouseUp)
+    if (selected_index < 0) return
+    var selected_dom = effects.listDoms[selected_index]
+    var selected_effect = effects.list[selected_index]
+    selected_dom.style.opacity = ''
+    for (var i = 0; i < effects.listDoms.length; i++) {
+      var dom = effects.listDoms[i]
+      var effect = effects.list[i]
+      var r = dom.getBoundingClientRect()
+      if (e.clientY >= r.top && e.clientY <= r.bottom) {
+        if (i >= selected_index) {
+          effects.domList.insertBefore(selected_dom, dom.nextSibling)
+        } else {
+          effects.domList.insertBefore(selected_dom, dom)
+        }
+        break;
+      }
+    }
+    syncList();
+    selected_index = null;
+  }
+  // DODGY item movement code END
+  itemContainer.appendChild(effects.fab('div', {
+    className: 'tokenr-editor-effects-item-move',
+    onmousedown: function(e) {
+      selected_index = Array.prototype.indexOf.call(effects.domList.children, this.parentNode);
+      effects.listDoms[selected_index].style.opacity = 0.5
+      window.addEventListener('mouseup', mouseUp)
+    }
+  }))
   itemContainer.appendChild(itemContent)
-  var _index = effects.list.length
   itemContainer.appendChild(effects.fab('input', {
     type: 'button', value: 'remove', onclick: function(e) {
       effects.emit('rem', itemContainer)
@@ -278,7 +322,6 @@ effects.on('add', function(index) {
   effects.domList.appendChild(itemContainer)
   effects.listDoms.push(itemContainer)
   effects.list.push(effect)
-  effect.index = effects.list.length-1;
   editor.emit('render')
 })
 effects.on('rem', function(el) {
