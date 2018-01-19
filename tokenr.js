@@ -484,9 +484,10 @@ return {
           }
           var scale = editor.dom.height / editor.dom.offsetHeight
           deltaY *= scale;
-          self.sizeX.value = parseInt(self.sizeX.value) + deltaY
+          var ar = parseInt(self.sizeX.value) / parseInt(self.sizeY.value);
+          self.sizeX.value = parseInt(self.sizeX.value) + deltaY * ar
           self.sizeY.value = parseInt(self.sizeY.value) + deltaY
-          self.offsetX.value = parseInt(self.offsetX.value) - (deltaY / 2);
+          self.offsetX.value = parseInt(self.offsetX.value) - (deltaY * ar / 2);
           self.offsetY.value = parseInt(self.offsetY.value) - (deltaY / 2);
           editor.emit('render')
         }
