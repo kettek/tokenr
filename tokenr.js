@@ -236,6 +236,32 @@ effects.domList   = null
 effects.available = []
 effects.list      = []
 effects.listDoms  = []
+effects.selected  = -1
+effects.syncList  = function() {
+  var remap = [], list = [], listDoms = [];
+  for (var i = 0; i < effects.listDoms.length; i++) {
+    remap.push([i, Array.prototype.indexOf.call(effects.domList.children, effects.listDoms[i])])
+  }
+  for (var i = 0; i < remap.length; i++) {
+    list[remap[i][1]] = effects.list[remap[i][0]]
+    listDoms[remap[i][1]] = effects.listDoms[remap[i][0]]
+  }
+  effects.list = list
+  effects.listDoms = listDoms
+  editor.emit('render')
+}
+effects.select   = function(index) {
+  if (effects.selected >= 0 && effects.listDoms[effects.selected]) {
+    effects.listDoms[effects.selected].classList.remove("selected")
+  }
+  if (index < 0 || index >= effects.listDoms.length) {
+    effects.selected = -1;
+  } else {
+    effects.selected = index;
+    effects.listDoms[effects.selected].classList.add("selected")
+  }
+}
+
 effects.on('init', function(dom) {
   effects.domAdd = dom.querySelector('#tokenr-editor-effects-add')
   effects.domSelect = dom.querySelector('#tokenr-editor-effects-select')
@@ -257,7 +283,16 @@ effects.on('add', function(index) {
   var effect_setup = effect.setup ? effect.setup(editor) : null
   var effect_view = effect.view(editor) || []
   var selected_index = -1
-  var itemContainer = effects.fab('div', {className: 'tokenr-editor-effects-item'})
+  var itemContainer = effects.fab('div', {className: 'tokenr-editor-effects-item', onmousedown: function(e) {
+    effects.select(Array.prototype.indexOf.call(effects.domList.children, this))
+  }})
+  effect.dom = itemContainer
+  effect.isSelected = function() {
+    return this.getIndex() == effects.selected
+  }
+  effect.getIndex = function() {
+    return Array.prototype.indexOf.call(effects.domList.children, this.dom)
+  }
   var itemContent = effects.fab('div', {className: (effect.containerType ? effect.containerType+' ' : '') + 'tokenr-editor-effects-item-content'})
   var elBackground = effects.fab('input', {type: 'checkbox', checked: effect.isBackground})
   elBackground.addEventListener('change', function(e) {
@@ -267,19 +302,6 @@ effects.on('add', function(index) {
   itemContent.appendChild(elBackground)
   for (var i = 0; i < effect_view.length; i++) {
     itemContent.appendChild(effect_view[i])
-  }
-  function syncList() {
-    var remap = [], list = [], listDoms = [];
-    for (var i = 0; i < effects.listDoms.length; i++) {
-      remap.push([i, Array.prototype.indexOf.call(effects.domList.children, effects.listDoms[i])]);
-    }
-    for (var i = 0; i < remap.length; i++) {
-      list[remap[i][1]] = effects.list[remap[i][0]];
-      listDoms[remap[i][1]] = effects.listDoms[remap[i][0]];
-    }
-    effects.list = list;
-    effects.listDoms = listDoms;
-    editor.emit('render')
   }
   // DODGY item movement code
   function mouseUp(e) {
@@ -301,7 +323,7 @@ effects.on('add', function(index) {
         break;
       }
     }
-    syncList();
+    effects.syncList();
     selected_index = null;
   }
   // DODGY item movement code END
@@ -322,18 +344,23 @@ effects.on('add', function(index) {
   effects.domList.appendChild(itemContainer)
   effects.listDoms.push(itemContainer)
   effects.list.push(effect)
+  if (effects.selected < 0) {
+    effects.select(0);
+  }
   editor.emit('render')
 })
 effects.on('rem', function(el) {
   var index = effects.listDoms.indexOf(el)
   if (index == -1) return
-  if (effects.list[index].remove) effects.list[index].remove(editor);
+  if (index == effects.selected) {
+    effects.select(index+1 < effects.listDoms.length ? index+1 : index-1);
+  }
+  if (effects.list[index].remove) effects.list[index].remove(editor)
   effects.listDoms[index].parentNode.removeChild(effects.listDoms[index])
   effects.listDoms.splice(index, 1)
   effects.list.splice(index, 1)
   editor.emit('render')
 })
-// effects - background, colorize, inner-shadow, outer-shadow
 effects.fab = function(tag, props) {
   var el = document.createElement(tag)
   Object.assign(el, props)
@@ -456,6 +483,7 @@ return {
           editor.emit('render')
         }
         self.mouseDown = function(e) {
+          if (!self.isSelected()) return
           e.preventDefault();
           editor.dom.addEventListener('mousemove', mouseMove);
           editor.dom.addEventListener('mouseup', mouseUp);
@@ -475,7 +503,8 @@ return {
         editor.dom.addEventListener('mousedown', self.mouseDown);
         self.wheelEvent = "onwheel" in document.createElement("div") ? "wheel" : document.onmousewheel !== undefined ? "mousewheel" : "DOMMouseScroll";
         self.mouseWheel = function(e) {
-          e.preventDefault();
+          if (!self.isSelected()) return
+          e.preventDefault()
           var deltaY = 0;
           if (self.wheelEvent == 'mousewheel') {
             deltaY = - 1/40 * e.wheelDelta
