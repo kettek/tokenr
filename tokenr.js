@@ -63,95 +63,6 @@ editor.desiredHeight = 1024;
 /* ======== Methods ======== */
 editor.on('init', function(dom) {
   editor.dom = dom
-  dom.addEventListener('dragover', function(e) {
-    e.preventDefault()
-    var w = editor.dom.width / 6
-    var h = editor.dom.height / 6
-    var r = editor.dom.getBoundingClientRect()
-    var x = e.clientX - r.left
-    var y = e.clientY - r.top
-
-    ctx = editor.overlay.getContext('2d')
-    ctx.clearRect(0, 0, editor.dom.width, editor.dom.height)
-    ctx.font = '32pt Bowlby One SC'
-    ctx.lineWidth = 2;
-    ctx.textAlign = 'center'
-
-    ctx.globalAlpha = 0.25
-    ctx.fillStyle = '#000'
-    ctx.strokeStyle = '#fff'
-    if (x >= w && x <= editor.dom.width-w
-        && y >= h && y <= editor.dom.height-h) {
-      ctx.fillRect(w, h, editor.dom.width-w*2, editor.dom.height-h*2)
-      ctx.globalAlpha = 1.0
-      ctx.fillText('Use Image', editor.dom.width/2, editor.dom.height/2-24+16)
-      ctx.strokeText('Use Image', editor.dom.width/2, editor.dom.height/2-24+16)
-      ctx.fillText('as Token', editor.dom.width/2, editor.dom.height/2+24+16)
-      ctx.strokeText('as Token', editor.dom.width/2, editor.dom.height/2+24+16)
-    } else {
-      ctx.fillRect(0, h, w, editor.dom.height-h*2)
-      ctx.fillRect(0, 0, editor.dom.width, h)
-      ctx.fillRect(editor.dom.width-w, h, w, editor.dom.height-h*2)
-      ctx.fillRect(0, editor.dom.height-h, editor.dom.width, h)
-      ctx.globalAlpha = 1.0
-      ctx.fillText('Use Image', editor.dom.width/2, editor.dom.height/2-24+16)
-      ctx.strokeText('Use Image', editor.dom.width/2, editor.dom.height/2-24+16)
-      ctx.fillText('as Border', editor.dom.width/2, editor.dom.height/2+24+16)
-      ctx.strokeText('as Border', editor.dom.width/2, editor.dom.height/2+24+16)
-    }
-    editor.isDragging = true
-    editor.emit('render')
-  }, true)
-  dom.addEventListener('dragleave', function(e) {
-    e.preventDefault()
-    ctx = editor.overlay.getContext('2d')
-    ctx.clearRect(0, 0, editor.dom.width, editor.dom.height)
-    editor.isDragging = false
-    editor.emit('render')
-  })
-  dom.addEventListener('drop', function(e) {
-    e.preventDefault()
-    ctx = editor.overlay.getContext('2d')
-    ctx.clearRect(0, 0, editor.dom.width, editor.dom.height)
-
-    var w = editor.dom.width / 6
-    var h = editor.dom.height / 6
-    var r = editor.dom.getBoundingClientRect()
-    var x = e.clientX - r.left
-    var y = e.clientY - r.top
-
-    var data = e.dataTransfer.items
-    // Allow URL pasting
-    if (data[0].kind == 'string') {
-      data[0].getAsString(function(src) {
-        src = src.split('\n')[0]
-        if (x >= w && x <= editor.dom.width-w
-            && y >= h && y <= editor.dom.height-h) {
-          //editor.tokenImage.src = src
-        } else {
-          //editor.borderImage.src = src
-        }
-      })
-    } else {
-      var src = data[0].getAsFile()
-      if (!src.type.match(/image.*/)) {
-        alert("The dropped file is not an image: " + src.type)
-      } else {
-        var reader = new FileReader()
-        reader.onload = function (e) {
-          if (x >= w && x <= editor.dom.width-w
-              && y >= h && y <= editor.dom.height-h) {
-            //editor.tokenImage.src = e.target.result
-          } else {
-            //editor.borderImage.src = e.target.result
-          }
-        }
-        reader.readAsDataURL(src)
-      }
-    }
-    editor.isDragging = false
-    editor.emit('render')
-  }, true)
   // field functionality
   var range   = document.getElementById('tokenr-scale-range')
   var field   = document.getElementById('tokenr-scale-field')
@@ -230,6 +141,7 @@ editor.on('update', function() {
 })
 
 var effects = new ktk.Emitter()
+editor.effects = effects;
 effects.domAdd    = null
 effects.domSelect = null
 effects.domList   = null
@@ -276,17 +188,25 @@ effects.on('import', function(obj) {
   opt.text = obj.name
   effects.domSelect.add(opt)
   effects.available.push(obj)
+  if (obj.import) {
+    obj.import(editor)
+    delete obj.import
+  }
 })
 effects.on('add', function(index) {
+  if (typeof index === "string") {
+    index = effects.available.map(function(e) { return e.name }).indexOf(index)
+  }
   if (index < 0 || index >= effects.available.length) return
   var effect = Object.assign({}, effects.available[index])
-  var effect_setup = effect.setup ? effect.setup(editor) : null
-  var effect_view = effect.view(editor) || []
   var selected_index = -1
   var itemContainer = effects.fab('div', {className: 'tokenr-editor-effects-item', onmousedown: function(e) {
     effects.select(Array.prototype.indexOf.call(effects.domList.children, this))
   }})
   effect.dom = itemContainer
+  var effect_setup = effect.setup ? effect.setup(editor) : null
+  var effect_view = effect.view(editor) || []
+
   effect.isSelected = function() {
     return this.getIndex() == effects.selected
   }
@@ -369,7 +289,12 @@ effects.fab = function(tag, props) {
 /* ================================ PUBLIC ================================ */
 return {
   init: function(dom) {
+    function preventDefault(e) { e.preventDefault() }
     editor.emit('init', dom.querySelector('#tokenr-editor')).emit('update')
+    dom.addEventListener('drop', preventDefault, true)
+    dom.addEventListener('dragleave', preventDefault, true)
+    dom.addEventListener('dragover', preventDefault, true)
+
     window.addEventListener('resize', function() {
       editor.emit('update');
     });
@@ -445,6 +370,7 @@ return {
         return [self.color, self.width];
       }
     });
+    var domImport = false;
     effects.emit('import', {
       isBackground: false,
       name: 'image',
@@ -521,6 +447,36 @@ return {
           editor.emit('render')
         }
         editor.dom.addEventListener(self.wheelEvent, self.mouseWheel, false);
+	      //
+        self.onDrop = function(e) {
+          e.preventDefault()
+          if (!self.isSelected()) return
+      
+          var data = e.dataTransfer.items
+          // Allow URL pasting
+          if (data[0].kind == 'string') {
+            data[0].getAsString(function(src) {
+              src = src.split('\n')[0]
+            })
+          } else {
+            var src = data[0].getAsFile()
+            if (!src.type.match(/image.*/)) {
+              alert("The dropped file is not an image: " + src.type)
+            } else {
+              var reader = new FileReader()
+              reader.onload = function (e) {
+                self.image.src = e.target.result;
+              }
+              reader.readAsDataURL(src)
+            }
+          }
+        }
+        self.dom.addEventListener('drop', self.onDrop, false);
+      },
+      import: function(editor) {
+        editor.dom.addEventListener('drop', function(e) {
+          editor.effects.emit('add', 'image')
+        }, false)
       },
       view: function(editor) {
         var self = this
