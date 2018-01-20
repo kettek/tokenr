@@ -460,6 +460,8 @@ return {
       import: function(editor) {
         editor.dom.addEventListener('drop', function(e) {
           editor.effects.emit('add', 'image')
+          editor.effects.select(editor.effects.list.length-1)
+          editor.effects.list[editor.effects.list.length-1].onDrop(e)
         }, false)
       },
       view: function(editor) {
