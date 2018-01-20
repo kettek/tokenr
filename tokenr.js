@@ -95,17 +95,9 @@ editor.on('render', function() {
   ctx = editor.dom.getContext('2d')
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, editor.dom.width, editor.dom.height)
-  // render background effects
+  // render effects
   ctx.globalCompositeOperation = 'source-over'
   for (var i = 0; i < effects.list.length; i++) {
-    if (!effects.list[i].isBackground) {
-      continue
-    }
-    effects.list[i].run(editor)
-  }
-  // render foreground effects
-  for (var i = 0; i < effects.list.length; i++) {
-    if (effects.list[i].isBackground) continue
     effects.list[i].run(editor)
   }
   /*if (!editor.isDragging && editor.tokenImage.width == 0) {
@@ -214,12 +206,6 @@ effects.on('add', function(index) {
     return Array.prototype.indexOf.call(effects.domList.children, this.dom)
   }
   var itemContent = effects.fab('div', {className: (effect.containerType ? effect.containerType+' ' : '') + 'tokenr-editor-effects-item-content'})
-  var elBackground = effects.fab('input', {type: 'checkbox', checked: effect.isBackground})
-  elBackground.addEventListener('change', function(e) {
-    effect.isBackground = e.target.checked
-    editor.emit('render')
-  })
-  itemContent.appendChild(elBackground)
   for (var i = 0; i < effect_view.length; i++) {
     itemContent.appendChild(effect_view[i])
   }
@@ -305,7 +291,6 @@ return {
       canvas: null,
       width: null,
       color: null,
-      isBackground: false,
       setup: function(editor) {
         var self = this;
         self.image = new Image();
@@ -372,7 +357,6 @@ return {
     });
     var domImport = false;
     effects.emit('import', {
-      isBackground: false,
       name: 'image',
       src: null,
       loadListener: null,
@@ -541,7 +525,6 @@ return {
       }
     })
     effects.emit('import', {
-      isBackground: true,
       name: 'color fill',
       color: '#000',
       alpha: 1.0,
@@ -578,7 +561,6 @@ return {
     })
     effects.emit('import', {
       name: 'linear gradient',
-      isBackground: false,
       aAlpha: 1.0,
       aColor: '#000000',
       bAlpha: 0.0,
