@@ -8,139 +8,7 @@
   })
   </script>
   <link href="https://fonts.googleapis.com/css?family=Bowlby+One+SC|Open+Sans" rel="stylesheet">
-  <style type='text/css'>
-    body { margin: 0; font-family: 'Open Sans', sans-serif }
-    h1,h2,h3,h4,h5,h6 { font-family: 'Bowlby One SC', cursive }
-    * {
-      box-sizing: border-box;
-    }
-    html {
-      min-height: 100%;
-    }
-    label {
-      color: #fff;
-      display: table-cell;
-      vertical-align: middle;
-      padding: 0 1em; padding: 0 1vw;
-    }
-    input {
-      margin: 1em; margin: 1vw;
-      padding: .25em; padding: .25vw;
-    }
-    #tokenr-container {
-      height: 100%;
-      width: 100%;
-      display: flex;
-      align-items: flex-start;
-      align-content: flex-start; 
-      justify-content: center;
-    }
-    #tokenr-editor {
-      flex: 1;
-      object-fit: contain; 
-      width: 50vw;
-      height: 50vw;
-      background-color: #606060;
-      background-image: linear-gradient(45deg, #a0a0a0 25%, transparent 25%), linear-gradient(-45deg, #a0a0a0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #a0a0a0 75%), linear-gradient(-45deg, transparent 75%, #a0a0a0 75%);
-      background-size: 60px 60px;
-      background-position: 0 0, 0 30px, 30px -30px, -30px 0px;
-      -moz-box-shadow:    inset 0 0 4px #000000;
-      -webkit-box-shadow: inset 0 0 4px #000000;
-      box-shadow:         inset 0 0 4px #000000;
-    }
-    #tokenr-editor-container {
-      position: relative;
-      background-color: #111;
-      width: 100%;
-    }
-    #tokenr-editor-settings {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #tokenr-scale-field {
-      width: 3em;
-    }
-    #tokenr-scale-range {
-      width: 3em;
-      flex: 1;
-      writing-mode: bt-lr; /* IE */
-      -webkit-appearance: slider-vertical; /* WebKit */
-    }
-    .rows {
-      display: flex;
-      flex-direction: row;
-    }
-    .cols {
-      display: flex;
-      flex-direction: column;
-    }
-    #tokenr-editor-effects {
-      flex: 1;
-    }
-    #tokenr-editor-effects-select {
-    }
-    #tokenr-editor-effects-list {
-      flex: 1;
-    }
-    .tokenr-editor-effects-item {
-      display: flex;
-      flex-direction: row;
-      width: 100%;
-      background-color: #999;
-      border: 1px solid #666;
-      border: 1px solid;
-    }
-    .tokenr-editor-effects-item.selected {
-      border: 1px solid #ccf;
-    }
-    .tokenr-editor-effects-item-content {
-      padding: 1em; padding: 1vw;
-      display: flex;
-      align-items: stretch;
-      flex: 1;
-    }
-    .tokenr-editor-effects-item-content img {
-      height: 64px;
-    }
-    .tokenr-editor-effects-item-content input {
-      display: table-cell;
-      vertical-align: middle;
-    }
-    .tokenr-editor-effects-item-content div {
-      display: flex;
-      justify-content: center;
-      align-items: stretch;
-      flex: 1;
-    }
-    .tokenr-editor-effects-item-content input[type=range] {
-      flex: 1;
-    }
-    .tokenr-editor-effects-item-add {
-      flex: 1;
-    }
-    .tokenr-editor-effects-item-move {
-      display: block;
-      width: 24px;
-      min-height: 100%;
-      margin: 1px 0 1px 0;
-      background-color: #646464;
-      cursor: move;
-      user-select: none;
-    }
-    .tokenr-editor-effects-item input {
-      margin: 0; padding: 0;
-    }
-    #tokenr-editor-view {
-      flex: 2;
-    }
-    #tokenr-output-width {
-      width: 4em;
-    }
-    #tokenr-output-height {
-      width: 4em;
-    }
-  </style>
+  <link href="style.css" rel="stylesheet">
 </head>
 <body>
 <div id='tokenr-container' class='rows'>
@@ -156,14 +24,14 @@
         </div>
         <button id='tokenr-editor-save'>Save</button>
       </div>
-      <div class='rows' id='tokenr-editor-view-container'>
-        <canvas id='tokenr-editor'></canvas>
-        <div class='cols' id='tokenr-editor-view-controls'>
-          <input type='number' id='tokenr-scale-field' /><input type='range' id='tokenr-scale-range' min='1' value='100' max='500' step='1' />
-      </div>
     </div>
   </div>
+      <div id='tokenr-editor-outerscroll'>
+        <div id='tokenr-editor-innerscroll'>
+          <canvas id='tokenr-editor'></canvas>
+        </div>
+      </div>
+
 </div>
-<h6>&nbsp;</h6>
 </body>
 </html>

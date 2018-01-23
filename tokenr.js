@@ -60,27 +60,12 @@ editor.overlay      = document.createElement('canvas')
 editor.transparentColor = [255, 0, 255]
 editor.desiredWidth = 1024;
 editor.desiredHeight = 1024;
+editor.scrollX = 0;
+editor.scrollY = 0;
+editor.zoom    = 1.0;
 /* ======== Methods ======== */
 editor.on('init', function(dom) {
   editor.dom = dom
-  // field functionality
-  var range   = document.getElementById('tokenr-scale-range')
-  var field   = document.getElementById('tokenr-scale-field')
-  range.addEventListener('input', function(e) {
-    field.value = e.target.value
-    var event = new Event('input');
-    field.dispatchEvent(event)
-  })
-  field.value = range.value
-  field.addEventListener('input', function(e) {
-    /*var last = editor.tokenImageZoom
-    range.value = field.value
-    editor.tokenImageZoom = parseInt(field.value) / 100
-    editor.tokenImageLeft += (editor.tokenImage.width/2) * (last - editor.tokenImageZoom) 
-    editor.tokenImageTop += (editor.tokenImage.height/2) * (last - editor.tokenImageZoom) */
-    editor.emit('render')
-  })
-  //editor.tokenImageZoom = parseInt(field.value) / 100
   var width = document.getElementById('tokenr-output-width');
   var height = document.getElementById('tokenr-output-height');
   width.addEventListener('input', function(e) {
@@ -89,6 +74,19 @@ editor.on('init', function(dom) {
     editor.emit('update');
   });
   height.addEventListener('input', function(e) {
+  });
+
+  function scaleView() {
+    var view_x = editor.dom.parentNode.offsetWidth
+    var view_y = editor.dom.parentNode.offsetHeight
+    var editor_x = editor.dom.offsetWidth
+    var editor_y = editor.dom.offsetHeight
+    var diff = editor.zoom - (view_x < editor_x ? 1 - (view_x / editor_x) : 0)
+    editor.dom.style = 'transform: scale('+diff+')'
+  }
+  scaleView()
+  window.addEventListener('resize', function(e) {
+    scaleView()
   });
 })
 editor.on('render', function() {
@@ -377,6 +375,13 @@ return {
         editor.dom.removeEventListener('mousedown', this.mouseDown);
         editor.dom.removeEventListener(this.wheelEvent, this.mouseWheel);
       },
+      transform: function(t) {
+        var self = this
+        if (t.size_x !== undefined) self.sizeX.value = t.size_x
+        if (t.size_y !== undefined) self.sizeY.value = t.size_y
+        if (t.offset_x !== undefined) self.offsetX.value = t.offset_x
+        if (t.offset_y !== undefined) self.offsetY.value = t.offset_y
+      },
       setup: function(editor) {
         var self = this;
         var mouse_x = 0;
@@ -386,15 +391,30 @@ return {
           var scale_y = editor.dom.height / editor.dom.offsetHeight
           var delta_x = mouse_x - (e.screenX * scale_x)
           var delta_y = mouse_y - (e.screenY * scale_y)
-          self.offsetX.value = parseInt(self.offsetX.value) - delta_x
-          self.offsetY.value = parseInt(self.offsetY.value) - delta_y
+          self.transform({
+            offset_x: parseInt(self.offsetX.value) - delta_x,
+            offset_y: parseInt(self.offsetY.value) - delta_y
+          })
           mouse_x = (e.screenX * scale_x)
           mouse_y = (e.screenY * scale_y)
           editor.emit('render')
         }
         self.mouseDown = function(e) {
-          if (!self.isSelected()) return
+          var rect = editor.dom.getBoundingClientRect();
+          var x = e.clientX - rect.left + ((rect.width-editor.dom.width))
+          var y = e.clientY - rect.top;
+          var l = parseInt(self.offsetX.value)
+            , r = l + parseInt(self.sizeX.value)
+            , t = parseInt(self.offsetY.value)
+            , b = t + parseInt(self.sizeY.value)
+          if (x >= l && x <= r
+              && y >= t && y <= b) {
+            editor.effects.select(self.getIndex())
+          } else {
+            return
+          }
           e.preventDefault();
+          e.stopImmediatePropagation()
           editor.dom.addEventListener('mousemove', mouseMove);
           editor.dom.addEventListener('mouseup', mouseUp);
           document.addEventListener('mouseout', mouseUp);
@@ -404,13 +424,16 @@ return {
           mouse_y = e.screenY * scale_y;
         }
         function mouseUp(e) {
-          self.offsetX.value = Math.round(self.offsetX.value);
-          self.offsetY.value = Math.round(self.offsetY.value);
+          self.transform({
+            offset_x: Math.round(parseInt(self.offsetX.value)),
+            offset_y: Math.round(parseInt(self.offsetY.value))
+          })
+
           editor.dom.removeEventListener('mouseup', mouseUp);
           editor.dom.removeEventListener('mousemove', mouseMove);
           document.removeEventListener('mouseout', mouseUp);
         }
-        editor.dom.addEventListener('mousedown', self.mouseDown);
+        editor.dom.addEventListener('mousedown', self.mouseDown)
         self.wheelEvent = "onwheel" in document.createElement("div") ? "wheel" : document.onmousewheel !== undefined ? "mousewheel" : "DOMMouseScroll";
         self.mouseWheel = function(e) {
           if (!self.isSelected()) return
@@ -424,10 +447,12 @@ return {
           var scale = editor.dom.height / editor.dom.offsetHeight
           deltaY *= scale;
           var ar = parseInt(self.sizeX.value) / parseInt(self.sizeY.value);
-          self.sizeX.value = parseInt(self.sizeX.value) + deltaY * ar
-          self.sizeY.value = parseInt(self.sizeY.value) + deltaY
-          self.offsetX.value = parseInt(self.offsetX.value) - (deltaY * ar / 2);
-          self.offsetY.value = parseInt(self.offsetY.value) - (deltaY / 2);
+          self.transform({
+            size_x: parseInt(self.sizeX.value) + deltaY * ar,
+            size_y: parseInt(self.sizeY.value) + deltaY,
+            offset_x: parseInt(self.offsetX.value) - (deltaY * ar / 2),
+            offset_y: parseInt(self.offsetY.value) - (deltaY / 2)
+          })
           editor.emit('render')
         }
         editor.dom.addEventListener(self.wheelEvent, self.mouseWheel, false);
@@ -474,10 +499,12 @@ return {
         })
         self.image = effects.fab('img', {
           onload: function(e) {
-            self.sizeX.value = self.image.naturalWidth ? self.image.naturalWidth : 512;
-            self.sizeY.value = self.image.naturalHeight ? self.image.naturalHeight : 512;
-            self.offsetX.value = Math.floor(editor.dom.width/2 - self.sizeX.value/2);
-            self.offsetY.value = Math.floor(editor.dom.height/2 - self.sizeY.value/2);
+            self.transform({
+              size_x: self.image.naturalWidth ? self.image.naturalWidth : 512,
+              size_y: self.image.naturalHeight ? self.image.naturalHeight : 512,
+              offset_x: Math.floor(editor.dom.width/2 - parseInt(self.sizeX.value)/2),
+              offset_y: Math.floor(editor.dom.height/2 - parseInt(self.sizeY.value)/2)
+            })
             editor.emit('render');
           }
         })
