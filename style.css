@@ -17,7 +17,7 @@ input {
   margin: 1em; margin: 1vw;
   padding: .25em; padding: .25vw;
 }
-#tokenr-container {
+#tokenr {
   height: 100%;
   width: 100%;
   display: flex;
@@ -56,15 +56,15 @@ input {
   display: flex;
   flex-direction: column;
 }
-#tokenr-editor-effects {
+#tokenr-effects {
   flex: 1;
 }
-#tokenr-editor-effects-select {
+#tokenr-effects-select {
 }
-#tokenr-editor-effects-list {
+#tokenr-effects-list {
   flex: 1;
 }
-.tokenr-editor-effects-item {
+.tokenr-effects-item {
   display: flex;
   flex-direction: row;
   width: 100%;
@@ -72,35 +72,35 @@ input {
   border: 1px solid #666;
   border: 1px solid;
 }
-.tokenr-editor-effects-item.selected {
+.tokenr-effects-item.selected {
   border: 1px solid #ccf;
 }
-.tokenr-editor-effects-item-content {
+.tokenr-effects-item-content {
   padding: 1em; padding: 1vw;
   display: flex;
   align-items: stretch;
   flex: 1;
 }
-.tokenr-editor-effects-item-content img {
+.tokenr-effects-item-content img {
   height: 64px;
 }
-.tokenr-editor-effects-item-content input {
+.tokenr-effects-item-content input {
   display: table-cell;
   vertical-align: middle;
 }
-.tokenr-editor-effects-item-content div {
+.tokenr-effects-item-content div {
   display: flex;
   justify-content: center;
   align-items: stretch;
   flex: 1;
 }
-.tokenr-editor-effects-item-content input[type=range] {
+.tokenr-effects-item-content input[type=range] {
   flex: 1;
 }
-.tokenr-editor-effects-item-add {
+.tokenr-effects-item-add {
   flex: 1;
 }
-.tokenr-editor-effects-item-move {
+.tokenr-effects-item-move {
   display: block;
   width: 24px;
   min-height: 100%;
@@ -109,32 +109,24 @@ input {
   cursor: move;
   user-select: none;
 }
-.tokenr-editor-effects-item input {
+
+.tokenr-effects-item input {
   margin: 0; padding: 0;
 }
-#tokenr-editor-view {
-  height: 100%;
-  flex: 2;
-  display: flex;
-}
-#tokenr-editor-view-container {
+
+#tokenr-view {
   background-color: #000;
 }
-#tokenr-editor {
-  transform-origin: left top;
+#tokenr-view-canvas {
+  background-color: #606060;
+  background-image: linear-gradient(45deg, #a0a0a0 25%, transparent 25%), linear-gradient(-45deg, #a0a0a0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #a0a0a0 75%), linear-gradient(-45deg, transparent 75%, #a0a0a0 75%);
+  background-size: 60px 60px;
+  background-position: 0 0, 0 30px, 30px -30px, -30px 0px;
 }
+
 #tokenr-output-width {
   width: 4em;
 }
 #tokenr-output-height {
   width: 4em;
-}
-#tokenr-editor-outerscroll {
-  flex: 1;
-  overflow: auto;
-  display: flex;
-}
-#tokenr-editor-innerscroll {
-  flex: 1;
-  overflow: auto;
 }

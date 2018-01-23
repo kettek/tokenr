@@ -4,34 +4,27 @@
   <script type='text/javascript' src='tokenr.js'></script>
   <script type='text/javascript'>
   window.addEventListener('load', function() {
-    ktk.Tokenr.init(document.getElementById('tokenr-container'))
+    ktk.Tokenr.init(document.getElementById('tokenr'))
   })
   </script>
   <link href="https://fonts.googleapis.com/css?family=Bowlby+One+SC|Open+Sans" rel="stylesheet">
   <link href="style.css" rel="stylesheet">
 </head>
 <body>
-<div id='tokenr-container' class='rows'>
-  <div id='tokenr-editor-container' class='rows'>
-    <div id='tokenr-editor-effects' class='cols'>
-      <div class='rows'><select id='tokenr-editor-effects-select' style='flex:1'></select><input id='tokenr-editor-effects-add' type='submit' value='Add' /></div>
-      <div id='tokenr-editor-effects-list' class='cols'></div>
-    </div>
-    <div id='tokenr-editor-view' class='cols'>
-      <div id='tokenr-editor-settings'>
-        <div>
-          <label>output: <input type='number' id='tokenr-output-width' value=1024 />x<input type='number' id='tokenr-output-height' value=1024 disabled /></label>
-        </div>
-        <button id='tokenr-editor-save'>Save</button>
-      </div>
-    </div>
+<div id='tokenr' class='rows'>
+  <div id='tokenr-effects' class='cols'>
+    <div class='rows'><select id='tokenr-effects-select' style='flex:1'></select><input id='tokenr-effects-add' type='submit' value='Add' /></div>
+    <div id='tokenr-effects-list' class='cols'></div>
   </div>
-      <div id='tokenr-editor-outerscroll'>
-        <div id='tokenr-editor-innerscroll'>
-          <canvas id='tokenr-editor'></canvas>
-        </div>
-      </div>
-
+  <div id='tokenr-settings'>
+    <div>
+      <label>output: <input type='number' id='tokenr-output-width' value=1024 />x<input type='number' id='tokenr-output-height' value=1024 disabled /></label>
+    </div>
+    <button id='tokenr-save'>Save</button>
+  </div>
+  <div id='tokenr-view'>
+    <canvas id='tokenr-view-canvas'></canvas>
+  </div>
 </div>
 </body>
 </html>

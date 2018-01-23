@@ -63,6 +63,7 @@ editor.desiredHeight = 1024;
 editor.scrollX = 0;
 editor.scrollY = 0;
 editor.zoom    = 1.0;
+editor.zoomInv = 1.0;
 /* ======== Methods ======== */
 editor.on('init', function(dom) {
   editor.dom = dom
@@ -79,15 +80,15 @@ editor.on('init', function(dom) {
   function scaleView() {
     var view_x = editor.dom.parentNode.offsetWidth
     var view_y = editor.dom.parentNode.offsetHeight
-    var editor_x = editor.dom.offsetWidth
-    var editor_y = editor.dom.offsetHeight
-    var diff = editor.zoom - (view_x < editor_x ? 1 - (view_x / editor_x) : 0)
-    editor.dom.style = 'transform: scale('+diff+')'
+    editor.zoom = view_x / editor.desiredWidth
+    editor.zoomInv = editor.desiredWidth / view_x
+    editor.dom.style.width = editor.desiredWidth * editor.zoom + 'px'
+    editor.dom.style.height = editor.desiredHeight * editor.zoom + 'px'
   }
-  scaleView()
   window.addEventListener('resize', function(e) {
     scaleView()
-  });
+  })
+  scaleView()
 })
 editor.on('render', function() {
   ctx = editor.dom.getContext('2d')
@@ -165,9 +166,9 @@ effects.select   = function(index) {
 }
 
 effects.on('init', function(dom) {
-  effects.domAdd = dom.querySelector('#tokenr-editor-effects-add')
-  effects.domSelect = dom.querySelector('#tokenr-editor-effects-select')
-  effects.domList = dom.querySelector('#tokenr-editor-effects-list')
+  effects.domAdd = dom.querySelector('#tokenr-effects-add')
+  effects.domSelect = dom.querySelector('#tokenr-effects-select')
+  effects.domList = dom.querySelector('#tokenr-effects-list')
 
   effects.domAdd.addEventListener('click', function(e) {
     effects.emit('add', effects.domSelect.selectedIndex)
@@ -190,7 +191,7 @@ effects.on('add', function(index) {
   if (index < 0 || index >= effects.available.length) return
   var effect = Object.assign({}, effects.available[index])
   var selected_index = -1
-  var itemContainer = effects.fab('div', {className: 'tokenr-editor-effects-item', onmousedown: function(e) {
+  var itemContainer = effects.fab('div', {className: 'tokenr-effects-item', onmousedown: function(e) {
     effects.select(Array.prototype.indexOf.call(effects.domList.children, this))
   }})
   effect.dom = itemContainer
@@ -203,7 +204,7 @@ effects.on('add', function(index) {
   effect.getIndex = function() {
     return Array.prototype.indexOf.call(effects.domList.children, this.dom)
   }
-  var itemContent = effects.fab('div', {className: (effect.containerType ? effect.containerType+' ' : '') + 'tokenr-editor-effects-item-content'})
+  var itemContent = effects.fab('div', {className: (effect.containerType ? effect.containerType+' ' : '') + 'tokenr-effects-item-content'})
   for (var i = 0; i < effect_view.length; i++) {
     itemContent.appendChild(effect_view[i])
   }
@@ -232,7 +233,7 @@ effects.on('add', function(index) {
   }
   // DODGY item movement code END
   itemContainer.appendChild(effects.fab('div', {
-    className: 'tokenr-editor-effects-item-move',
+    className: 'tokenr-effects-item-move',
     onmousedown: function(e) {
       selected_index = Array.prototype.indexOf.call(effects.domList.children, this.parentNode);
       effects.listDoms[selected_index].style.opacity = 0.5
@@ -274,7 +275,7 @@ effects.fab = function(tag, props) {
 return {
   init: function(dom) {
     function preventDefault(e) { e.preventDefault() }
-    editor.emit('init', dom.querySelector('#tokenr-editor')).emit('update')
+    editor.emit('init', dom.querySelector('#tokenr-view-canvas')).emit('update')
     dom.addEventListener('drop', preventDefault, true)
     dom.addEventListener('dragleave', preventDefault, true)
     dom.addEventListener('dragover', preventDefault, true)
@@ -282,7 +283,7 @@ return {
     window.addEventListener('resize', function() {
       editor.emit('update');
     });
-    effects.emit('init', dom.querySelector('#tokenr-editor-effects'))
+    effects.emit('init', dom.querySelector('#tokenr-effects'))
     effects.emit('import', {
       name: 'border stroke',
       image: null,
@@ -371,6 +372,9 @@ return {
         ctx = editor.dom.getContext('2d');
         ctx.drawImage(self.image, self.offsetX.value, self.offsetY.value, self.sizeX.value, self.sizeY.value);
       },
+      import: function(editor) {
+        // TODO: make mouseDown, etc., all run through the layers from last to first so we respect Z-index
+      },
       remove: function(editor) {
         editor.dom.removeEventListener('mousedown', this.mouseDown);
         editor.dom.removeEventListener(this.wheelEvent, this.mouseWheel);
@@ -387,26 +391,25 @@ return {
         var mouse_x = 0;
         var mouse_y = 0;
         function mouseMove(e) {
-          var scale_x = editor.dom.width / editor.dom.offsetHeight
-          var scale_y = editor.dom.height / editor.dom.offsetHeight
-          var delta_x = mouse_x - (e.screenX * scale_x)
-          var delta_y = mouse_y - (e.screenY * scale_y)
+          var delta_x = mouse_x - e.clientX
+          var delta_y = mouse_y - e.clientY
           self.transform({
-            offset_x: parseInt(self.offsetX.value) - delta_x,
-            offset_y: parseInt(self.offsetY.value) - delta_y
+            offset_x: parseFloat(self.offsetX.value) - delta_x * editor.zoomInv,
+            offset_y: parseFloat(self.offsetY.value) - delta_y * editor.zoomInv
           })
-          mouse_x = (e.screenX * scale_x)
-          mouse_y = (e.screenY * scale_y)
+          mouse_x = e.clientX
+          mouse_y = e.clientY
           editor.emit('render')
         }
         self.mouseDown = function(e) {
           var rect = editor.dom.getBoundingClientRect();
-          var x = e.clientX - rect.left + ((rect.width-editor.dom.width))
-          var y = e.clientY - rect.top;
-          var l = parseInt(self.offsetX.value)
-            , r = l + parseInt(self.sizeX.value)
-            , t = parseInt(self.offsetY.value)
-            , b = t + parseInt(self.sizeY.value)
+          var x = e.clientX - rect.left
+          var y = e.clientY - rect.top
+          var l = parseFloat(self.offsetX.value)
+            , r = l + parseFloat(self.sizeX.value)
+            , t = parseFloat(self.offsetY.value)
+            , b = t + parseFloat(self.sizeY.value)
+          l *= editor.zoom, r *= editor.zoom, t *= editor.zoom, b *= editor.zoom
           if (x >= l && x <= r
               && y >= t && y <= b) {
             editor.effects.select(self.getIndex())
@@ -418,20 +421,18 @@ return {
           editor.dom.addEventListener('mousemove', mouseMove);
           editor.dom.addEventListener('mouseup', mouseUp);
           document.addEventListener('mouseout', mouseUp);
-          var scale_x = editor.dom.width / editor.dom.offsetHeight
-          var scale_y = editor.dom.height / editor.dom.offsetHeight
-          mouse_x = e.screenX * scale_x;
-          mouse_y = e.screenY * scale_y;
+          mouse_x = e.clientX
+          mouse_y = e.clientY
         }
         function mouseUp(e) {
           self.transform({
-            offset_x: Math.round(parseInt(self.offsetX.value)),
-            offset_y: Math.round(parseInt(self.offsetY.value))
+            offset_x: Math.round(parseFloat(self.offsetX.value)),
+            offset_y: Math.round(parseFloat(self.offsetY.value))
           })
-
           editor.dom.removeEventListener('mouseup', mouseUp);
           editor.dom.removeEventListener('mousemove', mouseMove);
           document.removeEventListener('mouseout', mouseUp);
+          editor.emit('render')
         }
         editor.dom.addEventListener('mousedown', self.mouseDown)
         self.wheelEvent = "onwheel" in document.createElement("div") ? "wheel" : document.onmousewheel !== undefined ? "mousewheel" : "DOMMouseScroll";
@@ -446,12 +447,12 @@ return {
           }
           var scale = editor.dom.height / editor.dom.offsetHeight
           deltaY *= scale;
-          var ar = parseInt(self.sizeX.value) / parseInt(self.sizeY.value);
+          var ar = parseFloat(self.sizeX.value) / parseFloat(self.sizeY.value);
           self.transform({
-            size_x: parseInt(self.sizeX.value) + deltaY * ar,
-            size_y: parseInt(self.sizeY.value) + deltaY,
-            offset_x: parseInt(self.offsetX.value) - (deltaY * ar / 2),
-            offset_y: parseInt(self.offsetY.value) - (deltaY / 2)
+            size_x: parseFloat(self.sizeX.value) + deltaY * ar,
+            size_y: parseFloat(self.sizeY.value) + deltaY,
+            offset_x: parseFloat(self.offsetX.value) - (deltaY * ar / 2),
+            offset_y: parseFloat(self.offsetY.value) - (deltaY / 2)
           })
           editor.emit('render')
         }
