@@ -21,17 +21,6 @@ input {
   height: 100%;
   width: 100%;
   display: flex;
-}
-#tokenr-editor {
-  background-color: #606060;
-  background-image: linear-gradient(45deg, #a0a0a0 25%, transparent 25%), linear-gradient(-45deg, #a0a0a0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #a0a0a0 75%), linear-gradient(-45deg, transparent 75%, #a0a0a0 75%);
-  background-size: 60px 60px;
-  background-position: 0 0, 0 30px, 30px -30px, -30px 0px;
-  -moz-box-shadow:    inset 0 0 4px #000000;
-  -webkit-box-shadow: inset 0 0 4px #000000;
-  box-shadow:         inset 0 0 4px #000000;
-}
-#tokenr-editor-container {
   background-color: #111;
 }
 #tokenr-editor-settings {
@@ -39,15 +28,7 @@ input {
   align-items: center;
   justify-content: center;
 }
-#tokenr-scale-field {
-  width: 3em;
-}
-#tokenr-scale-range {
-  width: 3em;
-  flex: 1;
-  writing-mode: bt-lr; /* IE */
-  -webkit-appearance: slider-vertical; /* WebKit */
-}
+
 .rows {
   display: flex;
   flex-direction: row;
@@ -56,6 +37,7 @@ input {
   display: flex;
   flex-direction: column;
 }
+
 #tokenr-effects {
   flex: 1;
 }
@@ -82,7 +64,9 @@ input {
   flex: 1;
 }
 .tokenr-effects-item-content img {
+  display: block;
   height: 64px;
+  width: 64px;
 }
 .tokenr-effects-item-content input {
   display: table-cell;
@@ -112,10 +96,14 @@ input {
 
 .tokenr-effects-item input {
   margin: 0; padding: 0;
+  width: 100%;
+  flex: 1;
 }
 
 #tokenr-view {
   background-color: #000;
+  flex: 3;
+  overflow: hidden;
 }
 #tokenr-view-canvas {
   background-color: #606060;

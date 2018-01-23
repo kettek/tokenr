@@ -72,25 +72,21 @@ editor.on('init', function(dom) {
   width.addEventListener('input', function(e) {
     editor.desiredWidth = parseInt(e.target.value);
     height.value = e.target.value;
+    editor.desiredHeight = parseInt(height.value)
     editor.emit('update');
   });
   height.addEventListener('input', function(e) {
   });
-
+})
+editor.on('render', function() {
   function scaleView() {
-    var view_x = editor.dom.parentNode.offsetWidth
-    var view_y = editor.dom.parentNode.offsetHeight
+    var view_x = editor.dom.parentNode.getBoundingClientRect().width
     editor.zoom = view_x / editor.desiredWidth
     editor.zoomInv = editor.desiredWidth / view_x
     editor.dom.style.width = editor.desiredWidth * editor.zoom + 'px'
     editor.dom.style.height = editor.desiredHeight * editor.zoom + 'px'
   }
-  window.addEventListener('resize', function(e) {
-    scaleView()
-  })
   scaleView()
-})
-editor.on('render', function() {
   ctx = editor.dom.getContext('2d')
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, editor.dom.width, editor.dom.height)
