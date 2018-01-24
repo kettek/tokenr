@@ -23,33 +23,6 @@ ktk.Emitter = ktk.Emitter || function() {
 */
 ktk.Tokenr = (function() {
 /* ================================ PRIVATE ================================ */
-var rand = function(mi, ma) {
-  var min = Math.ceil(mi);
-  var max = Math.floor(ma+1);
-  var r = Math.floor(Math.random() * (max - min)) + min;
-  return r
-}
-var names = [
-  'orc',
-  'half-orc',
-  'tengu',
-  'goblin',
-  'dryad',
-  'elf',
-  'halfling',
-  'kobold',
-  'dragon',
-  'barbarian',
-  'wizard',
-  'fighter',
-  'ranger',
-  'druid',
-  'bard',
-  'rogue',
-  'monk',
-  'skeleton'
-]
-var name = names[rand(0, names.length)]
 /* ======================== Editor ======================== */
 var editor = new ktk.Emitter()
 /* ======== Properties ======== */

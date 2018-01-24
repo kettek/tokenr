@@ -1,4 +1,31 @@
 /* ==== Effect: Image ==== */
+var rand = function(mi, ma) {
+  var min = Math.ceil(mi);
+  var max = Math.floor(ma+1);
+  var r = Math.floor(Math.random() * (max - min)) + min;
+  return r
+}
+var names = [
+  'orc',
+  'half-orc',
+  'tengu',
+  'goblin',
+  'dryad',
+  'elf',
+  'halfling',
+  'kobold',
+  'dragon',
+  'barbarian',
+  'wizard',
+  'fighter',
+  'ranger',
+  'druid',
+  'bard',
+  'rogue',
+  'monk',
+  'skeleton'
+]
+
 ktk.Tokenr.import({
   name: 'image',
   src: null,
@@ -8,8 +35,8 @@ ktk.Tokenr.import({
   offsetY: null,
   sizeX: null,
   sizeY: null,
-  mouseDown: null,
   mouseWheel: null,
+  undefinedName: '',
   render: function(editor) {
     var self = this
     ctx = editor.dom.getContext('2d');
@@ -20,6 +47,16 @@ ktk.Tokenr.import({
       editor.selectionBox.style.width = parseFloat(self.sizeX.value) * editor.zoom +'px';
       editor.selectionBox.style.height = parseFloat(self.sizeY.value) * editor.zoom +'px';
       editor.selectionBox.classList.add('active')
+    }
+    if (!self.image.src) {
+      var string = 'Drop ' + self.undefinedName + ' here!';
+      ctx.font = self.sizeX.value / (string.length/1.5) +'px Bowlby One SC'
+      ctx.fillStyle = '#000'
+      ctx.textAlign = 'center'
+      ctx.fillText(string, parseFloat(self.offsetX.value) + parseFloat(self.sizeX.value)/2, parseFloat(self.offsetY.value) + parseFloat(self.sizeY.value)/2)
+      ctx.lineWidth = 3
+      ctx.strokeStyle = '#fff'
+      ctx.strokeText(string, parseFloat(self.offsetX.value) + parseFloat(self.sizeX.value)/2, parseFloat(self.offsetY.value) + parseFloat(self.sizeY.value)/2)
     }
   },
   focus: function(editor) {
@@ -34,9 +71,29 @@ ktk.Tokenr.import({
   import: function(editor) {
     // Add 'drop' event listener to the editor view.
     editor.dom.addEventListener('drop', function(e) {
-      editor.effects.emit('add', 'image')
-      editor.effects.select(editor.effects.list.length-1)
-      editor.effects.list[editor.effects.list.length-1].onDrop(e)
+      var rect = editor.dom.getBoundingClientRect()
+      var x = e.clientX - rect.left
+      var y = e.clientY - rect.top
+
+      // Iterate through our effects from last to first.
+      if (editor.effects.selected >= 0 && editor.effects.selected < editor.effects.list.length && editor.effects.list[editor.effects.selected].name == 'image') {
+        var effect = editor.effects.list[editor.effects.selected];
+        // Do some collision detection.
+        var l = parseFloat(effect.offsetX.value)
+          , r = (l + parseFloat(effect.sizeX.value))
+          , t = parseFloat(effect.offsetY.value)
+          , b = (t + parseFloat(effect.sizeY.value))
+        l *= editor.zoom, r *= editor.zoom, t *= editor.zoom, b *= editor.zoom
+        if (x >= l && x <= r && y >= t && y <= b) {
+        } else {
+          editor.effects.emit('add', 'image')
+          editor.effects.select(editor.effects.list.length-1)
+        }
+      } else {
+        editor.effects.emit('add', 'image')
+        editor.effects.select(editor.effects.list.length-1)
+      }
+      editor.effects.list[editor.effects.selected].onDrop(e)
     }, false)
 
     // Add 'mouse'-related handlers for managing image effect selection and focus.
@@ -112,6 +169,7 @@ ktk.Tokenr.import({
   },
   setup: function(editor) {
     var self = this;
+    self.undefinedName = names[rand(0, names.length-1)]
     self.wheelEvent = "onwheel" in document.createElement("div") ? "wheel" : document.onmousewheel !== undefined ? "mousewheel" : "DOMMouseScroll";
     self.mouseWheel = function(e) {
       if (!self.isSelected()) return
