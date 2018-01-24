@@ -101,10 +101,23 @@ input {
 }
 
 #tokenr-view {
+  position: relative;
   background-color: #000;
   flex: 3;
   overflow: hidden;
 }
+
+.tokenr-view-selection-box {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+}
+.tokenr-view-selection-box.active {
+  display: block;
+  border: 1px dashed rgba(255,128,32,0.5);
+  outline: 1px dashed rgba(128,255,32,0.75);
+}
+
 #tokenr-view-canvas {
   background-color: #606060;
   background-image: linear-gradient(45deg, #a0a0a0 25%, transparent 25%), linear-gradient(-45deg, #a0a0a0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #a0a0a0 75%), linear-gradient(-45deg, transparent 75%, #a0a0a0 75%);

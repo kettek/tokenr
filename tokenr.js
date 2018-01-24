@@ -64,6 +64,7 @@ editor.scrollX = 0;
 editor.scrollY = 0;
 editor.zoom    = 1.0;
 editor.zoomInv = 1.0;
+editor.selectionBox = null
 /* ======== Methods ======== */
 editor.on('init', function(dom) {
   editor.dom = dom
@@ -77,6 +78,10 @@ editor.on('init', function(dom) {
   });
   height.addEventListener('input', function(e) {
   });
+  // Add selection DOM.
+  editor.selectionBox = document.createElement('div')
+  editor.selectionBox.className = 'tokenr-view-selection-box'
+  editor.dom.parentNode.appendChild(editor.selectionBox)
 })
 editor.on('render', function() {
   function scaleView() {
@@ -135,12 +140,14 @@ effects.syncList  = function() {
 effects.select   = function(index) {
   if (effects.selected >= 0 && effects.listDoms[effects.selected]) {
     effects.listDoms[effects.selected].classList.remove("selected")
+    editor.selectionBox.classList.remove('active')
   }
   if (index < 0 || index >= effects.listDoms.length) {
     effects.selected = -1;
   } else {
     effects.selected = index;
     effects.listDoms[effects.selected].classList.add("selected")
+    editor.selectionBox.classList.add('active')
   }
 }
 
@@ -350,6 +357,12 @@ return {
         var self = this
         ctx = editor.dom.getContext('2d');
         ctx.drawImage(self.image, self.offsetX.value, self.offsetY.value, self.sizeX.value, self.sizeY.value);
+        if (self.isSelected()) {
+          editor.selectionBox.style.left = parseFloat(self.offsetX.value) * editor.zoom + 'px';
+          editor.selectionBox.style.top = parseFloat(self.offsetY.value) * editor.zoom +'px';
+          editor.selectionBox.style.width = parseFloat(self.sizeX.value) * editor.zoom +'px';
+          editor.selectionBox.style.height = parseFloat(self.sizeY.value) * editor.zoom +'px';
+        }
       },
       import: function(editor) {
         // Add 'drop' event listener to the editor view.
