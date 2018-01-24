@@ -346,17 +346,81 @@ return {
       sizeY: null,
       mouseDown: null,
       mouseWheel: null,
-      wheelEvent: '',
       run: function(editor) {
         var self = this
         ctx = editor.dom.getContext('2d');
         ctx.drawImage(self.image, self.offsetX.value, self.offsetY.value, self.sizeX.value, self.sizeY.value);
       },
       import: function(editor) {
-        // TODO: make mouseDown, etc., all run through the layers from last to first so we respect Z-index
+        // Add 'drop' event listener to the editor view.
+        editor.dom.addEventListener('drop', function(e) {
+          editor.effects.emit('add', 'image')
+          editor.effects.select(editor.effects.list.length-1)
+          editor.effects.list[editor.effects.list.length-1].onDrop(e)
+        }, false)
+
+        // Add 'mouse'-related handlers for managing image effect selection and focus.
+        var mouse_x = 0, mouse_y = 0, effect_index = -1
+        function mouseDown(e) {
+          var rect = editor.dom.getBoundingClientRect()
+          var x = e.clientX - rect.left
+          var y = e.clientY - rect.top
+
+          // Iterate through our effects from last to first.
+          for (var i = editor.effects.list.length-1; i >= 0; i--) {
+            if (editor.effects.list[i].name !== 'image') continue
+            var effect = editor.effects.list[i];
+            // Do some collision detection.
+            var l = parseFloat(effect.offsetX.value)
+              , r = (l + parseFloat(effect.sizeX.value))
+              , t = parseFloat(effect.offsetY.value)
+              , b = (t + parseFloat(effect.sizeY.value))
+            l *= editor.zoom, r *= editor.zoom, t *= editor.zoom, b *= editor.zoom
+            if (x >= l && x <= r && y >= t && y <= b) {
+              editor.effects.select(effect.getIndex())
+              effect_index = i;
+              e.preventDefault();
+              e.stopImmediatePropagation()
+              editor.dom.addEventListener('mousemove', mouseMove);
+              editor.dom.addEventListener('mouseup', mouseUp);
+              document.addEventListener('mouseout', mouseUp);
+              mouse_x = e.clientX
+              mouse_y = e.clientY
+              break;
+            } else {
+              continue
+            }
+          }
+        }
+        function mouseUp(e) {
+          if (effect_index == -1) return;
+          var effect = editor.effects.list[effect_index]
+          effect.transform({
+            offset_x: Math.round(parseFloat(effect.offsetX.value)),
+            offset_y: Math.round(parseFloat(effect.offsetY.value))
+          })
+          editor.dom.removeEventListener('mouseup', mouseUp);
+          editor.dom.removeEventListener('mousemove', mouseMove);
+          document.removeEventListener('mouseout', mouseUp);
+          editor.emit('render')
+          effect_index = -1;
+        }
+        function mouseMove(e) {
+          if (effect_index == -1) return;
+          var effect = editor.effects.list[effect_index]
+          var delta_x = mouse_x - e.clientX
+          var delta_y = mouse_y - e.clientY
+          effect.transform({
+            offset_x: parseFloat(effect.offsetX.value) - delta_x * editor.zoomInv,
+            offset_y: parseFloat(effect.offsetY.value) - delta_y * editor.zoomInv
+          })
+          mouse_x = e.clientX
+          mouse_y = e.clientY
+          editor.emit('render')
+        }
+        editor.dom.addEventListener('mousedown', mouseDown);
       },
       remove: function(editor) {
-        editor.dom.removeEventListener('mousedown', this.mouseDown);
         editor.dom.removeEventListener(this.wheelEvent, this.mouseWheel);
       },
       transform: function(t) {
@@ -368,53 +432,6 @@ return {
       },
       setup: function(editor) {
         var self = this;
-        var mouse_x = 0;
-        var mouse_y = 0;
-        function mouseMove(e) {
-          var delta_x = mouse_x - e.clientX
-          var delta_y = mouse_y - e.clientY
-          self.transform({
-            offset_x: parseFloat(self.offsetX.value) - delta_x * editor.zoomInv,
-            offset_y: parseFloat(self.offsetY.value) - delta_y * editor.zoomInv
-          })
-          mouse_x = e.clientX
-          mouse_y = e.clientY
-          editor.emit('render')
-        }
-        self.mouseDown = function(e) {
-          var rect = editor.dom.getBoundingClientRect();
-          var x = e.clientX - rect.left
-          var y = e.clientY - rect.top
-          var l = parseFloat(self.offsetX.value)
-            , r = l + parseFloat(self.sizeX.value)
-            , t = parseFloat(self.offsetY.value)
-            , b = t + parseFloat(self.sizeY.value)
-          l *= editor.zoom, r *= editor.zoom, t *= editor.zoom, b *= editor.zoom
-          if (x >= l && x <= r
-              && y >= t && y <= b) {
-            editor.effects.select(self.getIndex())
-          } else {
-            return
-          }
-          e.preventDefault();
-          e.stopImmediatePropagation()
-          editor.dom.addEventListener('mousemove', mouseMove);
-          editor.dom.addEventListener('mouseup', mouseUp);
-          document.addEventListener('mouseout', mouseUp);
-          mouse_x = e.clientX
-          mouse_y = e.clientY
-        }
-        function mouseUp(e) {
-          self.transform({
-            offset_x: Math.round(parseFloat(self.offsetX.value)),
-            offset_y: Math.round(parseFloat(self.offsetY.value))
-          })
-          editor.dom.removeEventListener('mouseup', mouseUp);
-          editor.dom.removeEventListener('mousemove', mouseMove);
-          document.removeEventListener('mouseout', mouseUp);
-          editor.emit('render')
-        }
-        editor.dom.addEventListener('mousedown', self.mouseDown)
         self.wheelEvent = "onwheel" in document.createElement("div") ? "wheel" : document.onmousewheel !== undefined ? "mousewheel" : "DOMMouseScroll";
         self.mouseWheel = function(e) {
           if (!self.isSelected()) return
@@ -437,7 +454,7 @@ return {
           editor.emit('render')
         }
         editor.dom.addEventListener(self.wheelEvent, self.mouseWheel, false);
-	      //
+        // Add handlers for dropping images/urls onto the input field or the image.
         self.onDrop = function(e) {
           e.preventDefault()
           if (!self.isSelected()) return
@@ -461,14 +478,6 @@ return {
             }
           }
         }
-        self.dom.addEventListener('drop', self.onDrop, false);
-      },
-      import: function(editor) {
-        editor.dom.addEventListener('drop', function(e) {
-          editor.effects.emit('add', 'image')
-          editor.effects.select(editor.effects.list.length-1)
-          editor.effects.list[editor.effects.list.length-1].onDrop(e)
-        }, false)
       },
       view: function(editor) {
         var self = this
@@ -476,7 +485,8 @@ return {
           value: '',
           oninput: function(e) {
             self.image.src = e.target.value;
-          }
+          },
+          ondrop: self.onDrop
         })
         self.image = effects.fab('img', {
           onload: function(e) {
@@ -487,7 +497,8 @@ return {
               offset_y: Math.floor(editor.dom.height/2 - parseInt(self.sizeY.value)/2)
             })
             editor.emit('render');
-          }
+          },
+          ondrop: self.onDrop
         })
         var offsetContainer = effects.fab('div');
         self.offsetX = effects.fab('input', {
