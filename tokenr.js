@@ -78,6 +78,9 @@ editor.on('update', function() {
   editor.emit('render')
   return this
 })
+editor.on('add-effect', function(e) {
+  editor.effects.emit('add', e)
+})
 
 /* Tokenr Effects
 * Effects are added to Tokenr by passing an effect object as the parameter to
@@ -284,11 +287,14 @@ return {
             next(++i, cb)
           })
         }
-        next(0)
+        next(0, cb)
       } else {
         effects.emit('import', effect)
       }
     }
+  },
+  emit: function(event, obj) {
+    editor.emit(event, obj)
   }
 }
 })()

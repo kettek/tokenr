@@ -6,6 +6,8 @@
   window.addEventListener('load', function() {
     ktk.Tokenr.init(document.getElementById('tokenr'))
     ktk.Tokenr.import(['effects/border-stroke.js', 'effects/image.js', 'effects/color-fill.js', 'effects/linear-gradient.js'], function() {
+      ktk.Tokenr.emit('add-effect', 'image')
+      ktk.Tokenr.emit('add-effect', 'border stroke')
     })
   })
   </script>

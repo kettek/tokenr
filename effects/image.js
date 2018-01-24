@@ -239,8 +239,8 @@ ktk.Tokenr.import({
     self.image = editor.effects.fab('img', {
       onload: function(e) {
         self.transform({
-          size_x: self.image.naturalWidth ? self.image.naturalWidth : 512,
-          size_y: self.image.naturalHeight ? self.image.naturalHeight : 512,
+          size_x: self.image.naturalWidth ? self.image.naturalWidth : editor.desiredWidth,
+          size_y: self.image.naturalHeight ? self.image.naturalHeight : editor.desiredHeight,
           offset_x: Math.floor(editor.dom.width/2 - parseInt(self.sizeX.value)/2),
           offset_y: Math.floor(editor.dom.height/2 - parseInt(self.sizeY.value)/2)
         })
@@ -272,7 +272,7 @@ ktk.Tokenr.import({
     self.sizeX = editor.effects.fab('input', {
       type: 'number',
       style: 'width: 4em',
-      value: '512',
+      value: editor.desiredWidth,
       oninput: function() {
         editor.emit('render')
       }
@@ -280,7 +280,7 @@ ktk.Tokenr.import({
     self.sizeY = editor.effects.fab('input', {
       type: 'number',
       style: 'width: 4em',
-      value: '512',
+      value: editor.desiredHeight,
       oninput: function() {
         editor.emit('render')
       }
