@@ -37,7 +37,6 @@ editor.scrollX = 0;
 editor.scrollY = 0;
 editor.zoom    = 1.0;
 editor.zoomInv = 1.0;
-editor.selectionBox = null
 /* ======== Methods ======== */
 editor.on('init', function(dom) {
   editor.dom = dom
@@ -51,10 +50,6 @@ editor.on('init', function(dom) {
   });
   height.addEventListener('input', function(e) {
   });
-  // Add selection DOM.
-  editor.selectionBox = document.createElement('div')
-  editor.selectionBox.className = 'tokenr-view-selection-box'
-  editor.dom.parentNode.appendChild(editor.selectionBox)
 })
 editor.on('render', function() {
   function scaleView() {
@@ -88,6 +83,34 @@ editor.on('update', function() {
   return this
 })
 
+/* Tokenr Effects
+* Effects are added to Tokenr by passing an effect object as the parameter to
+* the editor's import event. These objects should contain the following properties,
+* with optional properties surrounded by brackets.
+*   * `import`
+*     - Called once during the importing of the effect.
+*     - Setup shared logic for all instances of the effect.
+*   * `setup`
+*     - Called once during the creation of the effect.
+*     - Setup instance logic and structures.
+*   * `view`
+*     - Called once during the creation of the effect and after `setup`.
+*     - Return an array of DOM elements that represent the effect's controls
+*   * `update`
+*     - Called whenever the editor should force internal recalculations from
+*       canvas size changes and similar.
+*     - Update internal data to match the dimensions of the canvas, etc.
+*   * `render`
+*     - Called whenever the editor renders the token view.
+*     - Render the effects to the editor's canvas.
+*   * `focus`
+*     - Called whenever the effect is selected in the effects list.
+*     - Display overlays.
+*   * `defocus`
+*     - Called whenever the effect is deselected in the effects list.
+*     - Hide overlays.
+*/
+/* effect: {[import], [setup], view, render, [focus], [unfocus]} */
 var effects = new ktk.Emitter()
 editor.effects = effects;
 effects.domAdd    = null
@@ -113,7 +136,7 @@ effects.syncList  = function() {
 effects.select   = function(index) {
   if (effects.selected >= 0 && effects.listDoms[effects.selected]) {
     effects.listDoms[effects.selected].classList.remove("selected")
-    editor.selectionBox.classList.remove('active')
+    if (effects.list[effects.selected].defocus) effects.list[effects.selected].defocus(editor)
   }
   if (index < 0 || index >= effects.listDoms.length) {
     effects.selected = -1;

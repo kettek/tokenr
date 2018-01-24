@@ -37,16 +37,17 @@ ktk.Tokenr.import({
   sizeY: null,
   mouseWheel: null,
   undefinedName: '',
+  selectionBox: null,   // Global selectionBox set in `import()`
   render: function(editor) {
     var self = this
     ctx = editor.dom.getContext('2d');
     ctx.drawImage(self.image, self.offsetX.value, self.offsetY.value, self.sizeX.value, self.sizeY.value);
     if (self.isSelected()) {
-      editor.selectionBox.style.left = parseFloat(self.offsetX.value) * editor.zoom + 'px';
-      editor.selectionBox.style.top = parseFloat(self.offsetY.value) * editor.zoom +'px';
-      editor.selectionBox.style.width = parseFloat(self.sizeX.value) * editor.zoom +'px';
-      editor.selectionBox.style.height = parseFloat(self.sizeY.value) * editor.zoom +'px';
-      editor.selectionBox.classList.add('active')
+      self.selectionBox.style.left = parseFloat(self.offsetX.value) * editor.zoom + 'px';
+      self.selectionBox.style.top = parseFloat(self.offsetY.value) * editor.zoom +'px';
+      self.selectionBox.style.width = parseFloat(self.sizeX.value) * editor.zoom +'px';
+      self.selectionBox.style.height = parseFloat(self.sizeY.value) * editor.zoom +'px';
+      self.selectionBox.classList.add('active')
     }
     if (!self.image.src) {
       var string = 'Drop ' + self.undefinedName + ' here!';
@@ -61,14 +62,23 @@ ktk.Tokenr.import({
   },
   focus: function(editor) {
     var self = this
-    editor.selectionBox.style.left = parseFloat(self.offsetX.value) * editor.zoom + 'px';
-    editor.selectionBox.style.top = parseFloat(self.offsetY.value) * editor.zoom +'px';
-    editor.selectionBox.style.width = parseFloat(self.sizeX.value) * editor.zoom +'px';
-    editor.selectionBox.style.height = parseFloat(self.sizeY.value) * editor.zoom +'px';
-    editor.selectionBox.classList.add('active')
+    self.selectionBox.style.left = parseFloat(self.offsetX.value) * editor.zoom + 'px';
+    self.selectionBox.style.top = parseFloat(self.offsetY.value) * editor.zoom +'px';
+    self.selectionBox.style.width = parseFloat(self.sizeX.value) * editor.zoom +'px';
+    self.selectionBox.style.height = parseFloat(self.sizeY.value) * editor.zoom +'px';
+    self.selectionBox.classList.add('active')
     editor.emit('render')
   },
+  defocus: function(editor) {
+    var self = this
+    self.selectionBox.classList.remove('active')
+  },
   import: function(editor) {
+    // Add our selectionBox to the editor view.
+    this.selectionBox = document.createElement('div')
+    this.selectionBox.className = 'tokenr-view-selection-box'
+    editor.dom.parentNode.appendChild(this.selectionBox)
+
     // Add 'drop' event listener to the editor view.
     editor.dom.addEventListener('drop', function(e) {
       var rect = editor.dom.getBoundingClientRect()
