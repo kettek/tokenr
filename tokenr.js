@@ -99,7 +99,7 @@ editor.on('render', function() {
   // render effects
   ctx.globalCompositeOperation = 'source-over'
   for (var i = 0; i < effects.list.length; i++) {
-    effects.list[i].run(editor)
+    effects.list[i].render(editor)
   }
 })
 editor.on('update', function() {
@@ -147,7 +147,7 @@ effects.select   = function(index) {
   } else {
     effects.selected = index;
     effects.listDoms[effects.selected].classList.add("selected")
-    editor.selectionBox.classList.add('active')
+    if (effects.list[effects.selected].focus) effects.list[effects.selected].focus(editor)
   }
 }
 
@@ -228,7 +228,7 @@ effects.on('add', function(index) {
   }))
   itemContainer.appendChild(itemContent)
   itemContainer.appendChild(effects.fab('input', {
-    type: 'button', value: 'remove', onclick: function(e) {
+    type: 'button', className: 'tokenr-effects-item-remove', value: 'remove', onclick: function(e) {
       effects.emit('rem', itemContainer)
     }
   }))
@@ -309,7 +309,7 @@ return {
         ctx.stroke()
         self.image.src = self.canvas.toDataURL();
       },
-      run: function(editor) {
+      render: function(editor) {
         var self = this;
         var ctx = editor.dom.getContext('2d');
         ctx.globalCompositeOperation = 'destination-in'
@@ -353,7 +353,7 @@ return {
       sizeY: null,
       mouseDown: null,
       mouseWheel: null,
-      run: function(editor) {
+      render: function(editor) {
         var self = this
         ctx = editor.dom.getContext('2d');
         ctx.drawImage(self.image, self.offsetX.value, self.offsetY.value, self.sizeX.value, self.sizeY.value);
@@ -362,7 +362,17 @@ return {
           editor.selectionBox.style.top = parseFloat(self.offsetY.value) * editor.zoom +'px';
           editor.selectionBox.style.width = parseFloat(self.sizeX.value) * editor.zoom +'px';
           editor.selectionBox.style.height = parseFloat(self.sizeY.value) * editor.zoom +'px';
+          editor.selectionBox.classList.add('active')
         }
+      },
+      focus: function(editor) {
+        var self = this
+        editor.selectionBox.style.left = parseFloat(self.offsetX.value) * editor.zoom + 'px';
+        editor.selectionBox.style.top = parseFloat(self.offsetY.value) * editor.zoom +'px';
+        editor.selectionBox.style.width = parseFloat(self.sizeX.value) * editor.zoom +'px';
+        editor.selectionBox.style.height = parseFloat(self.sizeY.value) * editor.zoom +'px';
+        editor.selectionBox.classList.add('active')
+        editor.emit('render')
       },
       import: function(editor) {
         // Add 'drop' event listener to the editor view.
@@ -564,7 +574,7 @@ return {
       name: 'color fill',
       color: '#000',
       alpha: 1.0,
-      run: function(editor) {
+      render: function(editor) {
         ctx = editor.dom.getContext('2d')
         ctx.globalAlpha = this.alpha
         ctx.fillStyle = this.color
@@ -603,7 +613,7 @@ return {
       bAlpha: 0.0,
       bColor: '#000000',
       containerType: 'cols',
-      run: function(editor) {
+      render: function(editor) {
         function hexToRgb(hex) {
           var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
           return result ? {
