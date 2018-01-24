@@ -13,17 +13,16 @@
 <body>
 <div id='tokenr' class='rows'>
   <div id='tokenr-effects' class='cols'>
-    <div class='rows'><select id='tokenr-effects-select' style='flex:1'></select><input id='tokenr-effects-add' type='submit' value='Add' /></div>
-    <div id='tokenr-effects-list' class='cols'></div>
-  </div>
-  <div id='tokenr-view'>
     <div id='tokenr-settings'>
       <div>
         <label>output: <input type='number' id='tokenr-output-width' value=1024 />x<input type='number' id='tokenr-output-height' value=1024 disabled /></label>
       </div>
     </div>
+    <div class='rows'><select id='tokenr-effects-select' style='flex:1'></select><input id='tokenr-effects-add' type='submit' value='Add' /></div>
+    <div id='tokenr-effects-list' class='cols'></div>
+  </div>
+  <div id='tokenr-view'>
     <canvas id='tokenr-view-canvas'></canvas>
-    <button id='tokenr-save'>Save</button>
   </div>
 </div>
 </body>

@@ -80,9 +80,10 @@ editor.on('init', function(dom) {
 })
 editor.on('render', function() {
   function scaleView() {
-    var view_x = editor.dom.parentNode.getBoundingClientRect().width
-    editor.zoom = view_x / editor.desiredWidth
-    editor.zoomInv = editor.desiredWidth / view_x
+    var r = editor.dom.parentNode.getBoundingClientRect()
+    var view = r.height > r.width ? r.width : r.height
+    editor.zoom = view / editor.desiredWidth
+    editor.zoomInv = editor.desiredWidth / view
     editor.dom.style.width = editor.desiredWidth * editor.zoom + 'px'
     editor.dom.style.height = editor.desiredHeight * editor.zoom + 'px'
   }
@@ -95,26 +96,8 @@ editor.on('render', function() {
   for (var i = 0; i < effects.list.length; i++) {
     effects.list[i].run(editor)
   }
-  /*if (!editor.isDragging && editor.tokenImage.width == 0) {
-    ctx.font = '32pt Bowlby One SC'
-    ctx.lineWidth = 2;
-    ctx.textAlign = 'center'
-    ctx.fillStyle = '#000'
-    ctx.strokeStyle = '#fff'
-    ctx.fillText('Drop '+name+' here', editor.dom.width/2, editor.dom.height/2+16)
-    ctx.strokeText('Drop '+name+' here', editor.dom.width/2, editor.dom.height/2+16)
-  } else {
-    ctx.drawImage(editor.overlay, 0, 0)
-  }*/
 })
 editor.on('update', function() {
-  /*var pow_width = parseInt(editor.dom.offsetWidth)-1
-  pow_width |= pow_width >> 1; pow_width |= pow_width >> 2;
-  pow_width |= pow_width >> 4; pow_width |= pow_width >> 8;
-  pow_width |= pow_width >> 16; pow_width++;
-
-  editor.dom.width = pow_width
-  editor.dom.height = pow_width*/
   editor.dom.width = editor.desiredWidth;
   editor.dom.height = editor.desiredWidth;
 
@@ -280,6 +263,7 @@ return {
       editor.emit('update');
     });
     effects.emit('init', dom.querySelector('#tokenr-effects'))
+    /* ==== Effect: Border Stroke ==== */
     effects.emit('import', {
       name: 'border stroke',
       image: null,
@@ -350,7 +334,7 @@ return {
         return [self.color, self.width];
       }
     });
-    var domImport = false;
+    /* ==== Effect: Image ==== */
     effects.emit('import', {
       name: 'image',
       src: null,
@@ -550,6 +534,8 @@ return {
         return [self.image, self.src, containers]
       }
     })
+    /* ==== Effect: Image Fill ==== */
+    /* ==== Effect: Color Fill ==== */
     effects.emit('import', {
       name: 'color fill',
       color: '#000',
@@ -585,6 +571,7 @@ return {
         return [color, alphaSlider]
       }
     })
+    /* ==== Effect: Linear Gradient ==== */
     effects.emit('import', {
       name: 'linear gradient',
       aAlpha: 1.0,
