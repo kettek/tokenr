@@ -27,14 +27,10 @@ ktk.Tokenr = (function() {
 var editor = new ktk.Emitter()
 /* ======== Properties ======== */
 editor.dom          = null
-editor.isDragging         = false
 editor.backBuffer   = document.createElement('canvas')
 editor.overlay      = document.createElement('canvas')
-editor.transparentColor = [255, 0, 255]
 editor.desiredWidth = 1024;
 editor.desiredHeight = 1024;
-editor.scrollX = 0;
-editor.scrollY = 0;
 editor.zoom    = 1.0;
 editor.zoomInv = 1.0;
 /* ======== Methods ======== */
@@ -98,7 +94,7 @@ editor.on('update', function() {
 *     - Return an array of DOM elements that represent the effect's controls
 *   * `update`
 *     - Called whenever the editor should force internal recalculations from
-*       canvas size changes and similar.
+*       canvas size changes and similar. Calls `render` afterwards.
 *     - Update internal data to match the dimensions of the canvas, etc.
 *   * `render`
 *     - Called whenever the editor renders the token view.
@@ -268,19 +264,27 @@ return {
     });
     effects.emit('init', dom.querySelector('#tokenr-effects'))
   },
-  import: function(effect) {
+  import: function(effect, cb) {
     if (typeof effect === 'string') {
       var script = document.createElement('script');
       script.setAttribute('type', 'text/javascript')
       script.setAttribute('src', effect)
-      script.addEventListener('load', function(e) { });
+      script.addEventListener('load', function(e) { cb(script) });
       script.addEventListener('error', function(e) { alert(e); });
       document.getElementsByTagName('head')[0].appendChild(script);
     } else if (typeof effect === 'object') {
       if (effect.constructor === Array) {
-        for (var i = 0; i < effect.length; i++) {    
-          this.import(effect[i])
+        var s = this
+        function next(i, cb) {
+          if (i >= effect.length) {
+            if (cb) cb()
+            return
+          }
+          s.import(effect[i], function() {
+            next(++i, cb)
+          })
         }
+        next(0)
       } else {
         effects.emit('import', effect)
       }
