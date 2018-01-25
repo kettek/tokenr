@@ -238,11 +238,14 @@ ktk.Tokenr.import({
     })
     self.image = editor.effects.fab('img', {
       onload: function(e) {
+        // We apply the transform in two passes so that size applies before offset
         self.transform({
           size_x: self.image.naturalWidth ? self.image.naturalWidth : editor.desiredWidth,
-          size_y: self.image.naturalHeight ? self.image.naturalHeight : editor.desiredHeight,
-          offset_x: Math.floor(editor.dom.width/2 - parseInt(self.sizeX.value)/2),
-          offset_y: Math.floor(editor.dom.height/2 - parseInt(self.sizeY.value)/2)
+          size_y: self.image.naturalHeight ? self.image.naturalHeight : editor.desiredHeight
+        })
+        self.transform({
+          offset_x: Math.floor(editor.desiredWidth/2 - parseInt(self.sizeX.value)/2),
+          offset_y: Math.floor(editor.desiredHeight/2 - parseInt(self.sizeY.value)/2)
         })
         editor.emit('render');
       },
